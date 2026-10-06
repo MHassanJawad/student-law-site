@@ -1,0 +1,17 @@
+node_modules/
+.next/
+coverage/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+!.env.local.example
+.DS_Store
+tmp/
+.tmp/
+.npm-cache/
+supabase/.branches/
+supabase/.temp/
+apps/web/AGENTS.md
+apps/web/CLAUDE.md

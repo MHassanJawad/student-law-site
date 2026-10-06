@@ -1,0 +1,20 @@
+{
+  "name": "student-law-site",
+  "private": true,
+  "workspaces": ["apps/web", "apps/worker"],
+  "scripts": {
+    "dev": "npm run dev -w @student-law/web",
+    "build": "npm run build -w @student-law/web",
+    "lint": "npm run lint -w @student-law/web && npm run lint -w @student-law/worker",
+    "typecheck": "npm run typecheck -w @student-law/web && npm run typecheck -w @student-law/worker",
+    "test": "npm run test -w @student-law/web && npm run test -w @student-law/worker",
+    "import:sample": "npm run import:sample -w @student-law/worker",
+    "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "3.2.7",
+    "supabase": "2.116.0",
+    "@types/node": "22.20.1"
+  }
+}

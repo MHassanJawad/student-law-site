@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: Student Law Site API
+  version: 0.1.0
+  description: Phase 1 contract. Public reads expose published, source-traceable records only. Private operations use a validated Supabase bearer session.
+servers:
+  - url: /api/v1
+tags:
+  - name: Search
+  - name: Documents
+  - name: Editorial
+  - name: Account
+  - name: Coverage
+paths:
+  /search/judgments:
+    get:
+      tags: [Search]
+      summary: Search FCCP judgments only
+      parameters:
+        - $ref: '#/components/parameters/Query'
+        - {name: citation, in: query, schema: {type: string, maxLength: 200}}
+        - {name: from, in: query, schema: {type: string, format: date}}
+        - {name: to, in: query, schema: {type: string, format: date}}
+        - {name: bench, in: query, schema: {type: string}}
+        - {name: caseType, in: query, schema: {type: string}}
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': {description: FCCP results with coverage, content: {application/json: {schema: {$ref: '#/components/schemas/SearchPage'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /search/legislation:
+    get:
+      tags: [Search]
+      summary: Search covered federal and provincial laws
+      parameters:
+        - $ref: '#/components/parameters/Query'
+        - {name: jurisdiction, in: query, schema: {type: string}}
+        - {name: type, in: query, schema: {type: string}}
+        - {name: year, in: query, schema: {type: integer, minimum: 1800}}
+        - {name: status, in: query, schema: {type: string}}
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': {description: Law results with coverage, content: {application/json: {schema: {$ref: '#/components/schemas/SearchPage'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /search/citations:
+    get:
+      tags: [Search]
+      summary: Resolve exact or partial FCCP citation by text or reporter/year/page fields
+      parameters:
+        - {name: q, in: query, schema: {type: string, minLength: 2, maxLength: 200}}
+        - {name: reporter, in: query, schema: {type: string, maxLength: 30}}
+        - {name: year, in: query, schema: {type: integer, minimum: 1800}}
+        - {name: page, in: query, schema: {type: string, maxLength: 30}}
+        - $ref: '#/components/parameters/Page'
+      responses:
+        '200': {description: Candidate matches; ambiguous true when more than one plausible document, content: {application/json: {schema: {$ref: '#/components/schemas/CitationResults'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /documents/{id}:
+    get:
+      tags: [Documents]
+      summary: Published legal document and current published version
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '200': {description: Document detail, content: {application/json: {schema: {$ref: '#/components/schemas/Document'}}}}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /documents/{id}/sections:
+    get:
+      tags: [Documents]
+      summary: Validated sections of a published version
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '200': {description: Ordered sections, content: {application/json: {schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '#/components/schemas/Section'}}}}}}}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /editorial/{kind}:
+    get:
+      tags: [Editorial]
+      summary: List published editorial entries
+      parameters:
+        - $ref: '#/components/parameters/EditorialKind'
+        - $ref: '#/components/parameters/Query'
+        - $ref: '#/components/parameters/Page'
+      responses:
+        '200': {description: Published entries, content: {application/json: {schema: {type: object, required: [items, page], properties: {items: {type: array, items: {$ref: '#/components/schemas/EditorialEntry'}}, page: {type: integer}}}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+  /editorial/{kind}/{slug}:
+    get:
+      tags: [Editorial]
+      summary: Published editorial entry
+      parameters:
+        - $ref: '#/components/parameters/EditorialKind'
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Entry detail, content: {application/json: {schema: {$ref: '#/components/schemas/EditorialEntry'}}}}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /coverage:
+    get:
+      tags: [Coverage]
+      summary: Measured source coverage and checked dates
+      responses:
+        '200': {description: Coverage entries, content: {application/json: {schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '#/components/schemas/Coverage'}}}}}}}
+  /me/saved-citations:
+    get:
+      tags: [Account]
+      security: [{bearerAuth: []}]
+      summary: List own saved citations
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': {description: Own citations, content: {application/json: {schema: {type: object, required: [items, page], properties: {items: {type: array, items: {$ref: '#/components/schemas/SavedCitation'}}, page: {type: integer}}}}}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Account]
+      security: [{bearerAuth: []}]
+      summary: Save a published document citation once
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [documentId], properties: {documentId: {type: string, format: uuid}, note: {type: string, maxLength: 2000}, folder: {type: string, maxLength: 100}}}}}
+      responses:
+        '201': {description: Citation saved, content: {application/json: {schema: {$ref: '#/components/schemas/SavedCitation'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /me/saved-citations/{id}:
+    patch:
+      tags: [Account]
+      security: [{bearerAuth: []}]
+      summary: Update own saved citation note/folder
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {note: {type: string, maxLength: 2000}, folder: {type: string, maxLength: 100}}, minProperties: 1}}}
+      responses:
+        '200': {description: Updated saved citation, content: {application/json: {schema: {$ref: '#/components/schemas/SavedCitation'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      tags: [Account]
+      security: [{bearerAuth: []}]
+      summary: Remove own saved citation
+      parameters: [{$ref: '#/components/parameters/Id'}]
+      responses:
+        '204': {description: Removed}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+  parameters:
+    Query: {name: q, in: query, schema: {type: string, maxLength: 500}}
+    Page: {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+    Id: {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    EditorialKind: {name: kind, in: path, required: true, schema: {type: string, enum: [maxims, articles, dictionary]}}
+  responses:
+    BadRequest: {description: Invalid input, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    Unauthorized: {description: Missing or invalid session, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    NotFound: {description: No visible resource, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    Conflict: {description: Duplicate saved citation, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    RateLimited: {description: Rate limit reached, headers: {Retry-After: {schema: {type: integer}}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties: {code: {type: string}, message: {type: string}, requestId: {type: string}}
+    SearchPage:
+      type: object
+      required: [items, page, limit, total, coverage]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/SearchHit'}}
+        page: {type: integer}
+        limit: {type: integer}
+        total: {type: integer}
+        coverage: {type: array, items: {$ref: '#/components/schemas/Coverage'}}
+    SearchHit:
+      type: object
+      required: [id, kind, title, sourceUrl]
+      properties:
+        id: {type: string, format: uuid}
+        kind: {type: string, enum: [judgment, legislation]}
+        title: {type: string}
+        citation: {type: string, nullable: true}
+        date: {type: string, format: date, nullable: true}
+        excerpt: {type: string, nullable: true}
+        sourceUrl: {type: string, format: uri}
+        checkedAt: {type: string, format: date-time, nullable: true}
+    CitationResults:
+      type: object
+      required: [items, ambiguous]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/SearchHit'}}
+        ambiguous: {type: boolean}
+    Document:
+      allOf:
+        - $ref: '#/components/schemas/SearchHit'
+        - type: object
+          required: [versionId, textKind]
+          properties:
+            versionId: {type: string, format: uuid}
+            text: {type: string, nullable: true}
+            textKind: {type: string, enum: [source, extracted, ocr, none]}
+            versionLabel: {type: string, nullable: true}
+            sourceStatus: {type: string, nullable: true}
+            metadata: {type: object, additionalProperties: true}
+    Section:
+      type: object
+      required: [key, order, body]
+      properties: {key: {type: string}, order: {type: integer}, heading: {type: string, nullable: true}, body: {type: string}}
+    EditorialEntry:
+      type: object
+      required: [kind, slug, title, body]
+      properties: {kind: {type: string}, slug: {type: string}, title: {type: string}, body: {type: string}, author: {type: string, nullable: true}, sourceUrl: {type: string, format: uri, nullable: true}, publishedAt: {type: string, format: date-time, nullable: true}}
+    SavedCitation:
+      type: object
+      required: [id, documentId, citationSnapshot, createdAt]
+      properties: {id: {type: string, format: uuid}, documentId: {type: string, format: uuid}, citationSnapshot: {type: string}, note: {type: string, nullable: true}, folder: {type: string, nullable: true}, createdAt: {type: string, format: date-time}}
+    Coverage:
+      type: object
+      required: [sourceCode, kind, jurisdiction, count]
+      properties: {sourceCode: {type: string}, kind: {type: string}, jurisdiction: {type: string}, count: {type: integer}, earliestDate: {type: string, format: date, nullable: true}, latestDate: {type: string, format: date, nullable: true}, checkedAt: {type: string, format: date-time, nullable: true}}

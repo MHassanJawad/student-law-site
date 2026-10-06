@@ -1,0 +1,19 @@
+{
+  "name": "@student-law/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "import:sample": "node --env-file=.env --import tsx src/import-sample.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.4",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12",
+    "eslint": "9.39.2"
+  }
+}
