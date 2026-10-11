@@ -6,6 +6,7 @@
     "import:sample": "node --env-file=.env --import tsx src/import-sample.ts",
     "ingest:fccp": "node --env-file=.env --import tsx src/ingest-fccp.ts",
     "review:fccp": "node --env-file=.env --import tsx src/review-fccp.ts",
+    "inspect:fccp-pdf": "node --env-file=.env --import tsx src/inspect-fccp-pdf.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -13,6 +14,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
     "cheerio": "1.2.0",
+    "pdfjs-dist": "6.4.299",
     "zod": "3.25.76"
   },
   "devDependencies": {

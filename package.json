@@ -11,7 +11,9 @@
     "import:sample": "npm run import:sample -w @student-law/worker",
     "ingest:fccp": "npm run ingest:fccp -w @student-law/worker --",
     "review:fccp": "npm run review:fccp -w @student-law/worker --",
-    "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs"
+    "inspect:fccp-pdf": "npm run inspect:fccp-pdf -w @student-law/worker --",
+    "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs",
+    "test:ingestion-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-ingestion-local.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

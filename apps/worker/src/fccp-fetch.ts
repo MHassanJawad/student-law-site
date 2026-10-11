@@ -1,4 +1,4 @@
-// Fetch one approved FCCP HTML listing page with conservative network bounds.
+// Fetch bounded FCCP listing pages with conservative network limits.
 import { FCCP_LISTING_URL } from "./fccp-listing.js";
 
 const ORIGIN = "https://www.fccp.gov.pk";
@@ -47,11 +47,18 @@ export function robotsAllowsListing(robots: string): boolean {
     && relevant.every((line) => /^disallow:\s*$|^allow:/i.test(line));
 }
 
-/** Make at most two fixed-host requests: robots.txt, then one listing page. */
+/** Fetch one numbered listing page from the fixed official host. */
+export async function fetchFccpPage(page: number): Promise<{ html: string; httpStatus: number }> {
+  if (!Number.isInteger(page) || page < 1 || page > 15) throw new Error("FCCP page exceeds the pilot cap.");
+  const url = page === 1 ? FCCP_LISTING_URL : `${FCCP_LISTING_URL}?page=${page}`;
+  const listing = await checkedGet(url, "text/html", 1024 * 1024);
+  return { html: listing.text, httpStatus: listing.status };
+}
+
+/** Make at most two fixed-host requests for the original one-page pilot. */
 export async function fetchFccpListing(): Promise<{ html: string; httpStatus: number }> {
   await checkFccpRobots();
-  const listing = await checkedGet(FCCP_LISTING_URL, "text/html", 1024 * 1024);
-  return { html: listing.text, httpStatus: listing.status };
+  return fetchFccpPage(1);
 }
 
 export async function checkFccpRobots(): Promise<void> {

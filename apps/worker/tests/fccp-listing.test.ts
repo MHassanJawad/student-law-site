@@ -34,6 +34,12 @@ describe("FCCP metadata adapter", () => {
     ]);
   });
 
+  it("preserves a missing upload date as unknown source metadata", () => {
+    const result = parseFccpListing(page(row("C.P.L.A. No. 229-Q of 2024", "")));
+    expect(result.rejected).toEqual([]);
+    expect(result.candidates[0].uploadDate).toBeNull();
+  });
+
   it("stops on a changed page layout or restrictive robots rule", () => {
     expect(() => parseFccpListing("<html><body>No listing table</body></html>")).toThrow(/layout changed/);
     expect(robotsAllowsListing("User-agent: *\nDisallow:\n")).toBe(true);
