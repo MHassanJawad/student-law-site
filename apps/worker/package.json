@@ -4,16 +4,19 @@
   "type": "module",
   "scripts": {
     "import:sample": "node --env-file=.env --import tsx src/import-sample.ts",
+    "ingest:fccp": "node --env-file=.env --import tsx src/ingest-fccp.ts",
+    "review:fccp": "node --env-file=.env --import tsx src/review-fccp.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
+    "cheerio": "1.2.0",
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "tsx": "4.23.12",
-    "eslint": "9.39.2"
+    "eslint": "9.39.2",
+    "tsx": "4.23.12"
   }
 }

@@ -12,7 +12,7 @@ type Document = { id: string; title: string; citation: string | null; date: stri
 export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<Document | null>(null);
-  const [status, setStatus] = useState("Loading document…");
+  const [status, setStatus] = useState("Loading document...");
   const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function DocumentPage() {
     const session = await client?.auth.getSession();
     const token = session?.data.session?.access_token;
     if (!token) { setSaveStatus("Sign in first to save this citation."); return; }
-    setSaveStatus("Saving…");
+    setSaveStatus("Saving...");
     try {
       const response = await fetch("/api/v1/me/saved-citations", {
         method: "POST",
@@ -45,7 +45,7 @@ export default function DocumentPage() {
 
   return (
     <div className="page-wrap narrow-page">
-      <Link className="back-link" href="/search">← Back to search</Link>
+      <Link className="back-link" href="/search">&larr; Back to search</Link>
       {status && <p role="status">{status}</p>}
       {document && <article className="document-article">
         <p className="eyebrow">FEDERAL CONSTITUTIONAL COURT OF PAKISTAN</p>
@@ -59,7 +59,7 @@ export default function DocumentPage() {
           <p><strong>Last checked:</strong> {new Date(document.checkedAt).toLocaleDateString("en-PK")}</p>
         </div>
         <div className="document-actions">
-          <a className="button" href={document.sourceUrl} target="_blank" rel="noopener noreferrer">View official listing</a>
+          <a className="button" href={document.sourceUrl} target="_blank" rel="noopener noreferrer">{new URL(document.sourceUrl).pathname.startsWith("/download/") ? "Open official PDF" : "View official listing"}</a>
           <button className="button button-secondary" onClick={saveCitation}>Save citation</button>
         </div>
         <p className="status-line" aria-live="polite">{saveStatus}</p>

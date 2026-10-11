@@ -7,6 +7,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const webUrl = process.env.LOCAL_WEB_URL ?? "http://localhost:3000";
+const fixtureDocumentId = "22222222-2222-4222-8222-222222222222";
 for (const [name, value] of Object.entries({ SUPABASE_URL: supabaseUrl, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: anonKey, SUPABASE_SERVICE_ROLE_KEY: serviceKey })) {
   assert.ok(value, `${name} is required`);
 }
@@ -24,8 +25,10 @@ async function api(path, options = {}, expected = 200) {
   return body;
 }
 
-async function count(table) {
-  const { count: total, error } = await admin.from(table).select("id", { count: "exact", head: true });
+async function count(table, column, value) {
+  let query = admin.from(table).select("id", { count: "exact", head: true });
+  if (column) query = query.eq(column, value);
+  const { count: total, error } = await query;
   assert.ifError(error);
   return total;
 }
@@ -52,12 +55,17 @@ async function account(label) {
 }
 
 try {
-  assert.equal(await count("legal_documents"), 1);
-  assert.equal(await count("document_versions"), 1);
+  assert.equal(await count("legal_documents", "id", fixtureDocumentId), 1);
+  assert.equal(await count("document_versions", "document_id", fixtureDocumentId), 1);
   assert.equal((await fetch(new URL("/", webUrl))).status, 200);
+  const coverage = await api("/api/v1/coverage");
+  assert.equal(coverage.sources.reduce((total, source) => total + source.count, 0),
+    await count("legal_documents", "publication_status", "published"));
   const search = await api("/api/v1/search/judgments?q=C.P.L.A.%20No.1285-K");
   assert.equal(search.total, 1);
   assert.equal(search.items.length, 1);
+  assert.equal(search.items[0].citation, null);
+  assert.ok(search.items[0].caseNumber);
   const documentId = search.items[0].id;
   const detail = await api(`/api/v1/documents/${documentId}`);
   assert.equal(detail.id, documentId);
@@ -84,7 +92,7 @@ try {
   await api(`/api/v1/me/saved-citations/${saved.id}`, { method: "DELETE", headers: auth(b.token) }, 404);
   await api(`/api/v1/me/saved-citations/${saved.id}`, { method: "DELETE", headers: auth(a.token) }, 204);
   assert.deepEqual((await api("/api/v1/me/saved-citations", { headers: auth(a.token) })).items, []);
-  assert.equal(await count("document_versions"), 1);
+  assert.equal(await count("document_versions", "document_id", fixtureDocumentId), 1);
   process.stdout.write("Local acceptance passed: search, detail, two accounts, save, RLS isolation, removal, one version.\n");
 } finally {
   for (const id of temporaryUsers) {

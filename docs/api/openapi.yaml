@@ -101,7 +101,7 @@ paths:
       tags: [Coverage]
       summary: Measured source coverage and checked dates
       responses:
-        '200': {description: Coverage entries, content: {application/json: {schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '#/components/schemas/Coverage'}}}}}}}
+        '200': {description: Coverage entries, content: {application/json: {schema: {type: object, required: [sources], properties: {sources: {type: array, items: {$ref: '#/components/schemas/Coverage'}}}}}}}
   /me/saved-citations:
     get:
       tags: [Account]
@@ -190,6 +190,7 @@ components:
         id: {type: string, format: uuid}
         kind: {type: string, enum: [judgment, legislation]}
         title: {type: string}
+        caseNumber: {type: string, nullable: true}
         citation: {type: string, nullable: true}
         date: {type: string, format: date, nullable: true}
         excerpt: {type: string, nullable: true}
@@ -228,4 +229,4 @@ components:
     Coverage:
       type: object
       required: [sourceCode, kind, jurisdiction, count]
-      properties: {sourceCode: {type: string}, kind: {type: string}, jurisdiction: {type: string}, count: {type: integer}, earliestDate: {type: string, format: date, nullable: true}, latestDate: {type: string, format: date, nullable: true}, checkedAt: {type: string, format: date-time, nullable: true}}
+      properties: {sourceCode: {type: string}, kind: {type: string}, jurisdiction: {type: string}, count: {type: integer}, lastCheckedAt: {type: string, format: date-time, nullable: true}}

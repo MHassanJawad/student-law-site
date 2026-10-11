@@ -1,6 +1,8 @@
 node_modules/
 .next/
 coverage/
+!apps/web/src/app/api/v1/coverage/
+!apps/web/src/app/api/v1/coverage/route.ts
 dist/
 *.tsbuildinfo
 .env

@@ -9,6 +9,8 @@
     "typecheck": "npm run typecheck -w @student-law/web && npm run typecheck -w @student-law/worker",
     "test": "npm run test -w @student-law/web && npm run test -w @student-law/worker",
     "import:sample": "npm run import:sample -w @student-law/worker",
+    "ingest:fccp": "npm run ingest:fccp -w @student-law/worker --",
+    "review:fccp": "npm run review:fccp -w @student-law/worker --",
     "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs"
   },
   "devDependencies": {
