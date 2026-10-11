@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added Phase 4 Case Law, Courtwise, Citation, Advanced, and Statutes research screens with validated filters, exact counts, sorting, and source-linked document detail.
+- Added a local Pakistan Code legislation metadata sample, labeled with unknown legal status, and documented frontend testing steps.
 - Extended the FCCP importer to validate and stage a bounded 12-page listing, track missing metadata, and quarantine records absent from complete snapshots.
 - Added a private, reviewable one-PDF inspection path with source hash and extraction quality; no PDF text is made public.
 - Updated vulnerable production dependencies so the CI production audit passes.

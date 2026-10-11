@@ -23,5 +23,7 @@ export function CoverageSummary() {
   if (!coverage) return <p className="coverage-note" aria-live="polite">Checking current pilot coverage...</p>;
   const total = coverage.sources.filter((source) => source.kind === "judgment")
     .reduce((sum, source) => sum + source.count, 0);
-  return <p className="coverage-note" aria-live="polite">{total} reviewed FCCP judgment{total === 1 ? "" : "s"} searchable in this pilot. This is not a complete court archive.</p>;
+  const laws = coverage.sources.filter((source) => source.kind === "legislation")
+    .reduce((sum, source) => sum + source.count, 0);
+  return <p className="coverage-note" aria-live="polite">{total} published judgment{total === 1 ? "" : "s"} and {laws} legislation record{laws === 1 ? "" : "s"} in this local pilot. This is not a complete archive.</p>;
 }

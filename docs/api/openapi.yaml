@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Student Law Site API
   version: 0.1.0
-  description: Phase 1 contract. Public reads expose published, source-traceable records only. Private operations use a validated Supabase bearer session.
+  description: Public research reads expose published, approved, source-traceable records only. Private account operations use a validated Supabase bearer session.
 servers:
   - url: /api/v1
 tags:
@@ -12,6 +12,28 @@ tags:
   - name: Account
   - name: Coverage
 paths:
+  /search/research:
+    get:
+      tags: [Search]
+      summary: Search reviewed judgments or legislation by collection mode
+      parameters:
+        - {name: mode, in: query, schema: {type: string, enum: [case-law, courtwise, citation, advanced, statutes], default: case-law}}
+        - {name: q, in: query, schema: {type: string, maxLength: 200}}
+        - {name: author, in: query, schema: {type: string, maxLength: 100}}
+        - {name: from, in: query, schema: {type: string, format: date}}
+        - {name: to, in: query, schema: {type: string, format: date}}
+        - {name: reporter, in: query, schema: {type: string, maxLength: 30}}
+        - {name: citationYear, in: query, schema: {type: integer, minimum: 1800, maximum: 2200}}
+        - {name: citationPage, in: query, schema: {type: string, maxLength: 30}}
+        - {name: jurisdiction, in: query, schema: {type: string}}
+        - {name: year, in: query, schema: {type: integer, minimum: 1800, maximum: 2200}}
+        - {name: instrumentType, in: query, schema: {type: string, maxLength: 80}}
+        - {name: legalStatus, in: query, schema: {type: string, enum: [in_force, repealed, partly_in_force, unknown]}}
+        - {name: sort, in: query, schema: {type: string, enum: [relevance, decision-newest, decision-oldest, title]}}
+        - $ref: '#/components/parameters/Page'
+      responses:
+        '200': {description: Published approved results with measured coverage and Cache-Control no-store, content: {application/json: {schema: {$ref: '#/components/schemas/SearchPage'}}}}
+        '400': {$ref: '#/components/responses/BadRequest'}
   /search/judgments:
     get:
       tags: [Search]
@@ -196,6 +218,14 @@ components:
         excerpt: {type: string, nullable: true}
         sourceUrl: {type: string, format: uri}
         checkedAt: {type: string, format: date-time, nullable: true}
+        sourceCode: {type: string}
+        sourceName: {type: string}
+        versionId: {type: string, format: uuid}
+        court: {type: string, nullable: true}
+        jurisdiction: {type: string, nullable: true}
+        instrumentType: {type: string, nullable: true}
+        enactmentYear: {type: integer, nullable: true}
+        legalStatus: {type: string, nullable: true}
     CitationResults:
       type: object
       required: [items, ambiguous]
@@ -214,6 +244,8 @@ components:
             versionLabel: {type: string, nullable: true}
             sourceStatus: {type: string, nullable: true}
             metadata: {type: object, additionalProperties: true}
+            source: {type: object, additionalProperties: true}
+            sections: {type: array, items: {$ref: '#/components/schemas/Section'}}
     Section:
       type: object
       required: [key, order, body]

@@ -23,6 +23,10 @@ Phase 1 design, 2026-09-27. Tests are implemented alongside code in later phases
 | TC-017 | Accessibility | Keyboard-only search, detail, sign-in, saved flow | Logical focus, labeled controls, announced statuses, no keyboard trap | E2E/manual |
 | TC-018 | Performance | Representative pilot corpus and common queries | Search/detail p95 below 2 seconds; query plans recorded | Load |
 | TC-019 | Corpus quality | Sampled records against official page/file | Title, date, citation, sections, URL, and version match source or are marked unknown | Manual/data |
+| TC-020 | Research modes | Case Law, Courtwise, Advanced, Statutes on local pilot | Published records only; expected 1275, Najafi, and Contract Act matches | API/manual |
+| TC-021 | Structured citation | Reporter/year/page complete vs partial; no verified citation in seed | Complete input accepted; partial rejected; no fabricated match | Unit/API |
+| TC-022 | Section visibility | Staged vs approved section on current version | Only approved current-version sections visible | Database/manual |
+| TC-023 | Legislation status | Filter local Contract Act metadata by unknown status | One labeled local sample; no current-law assertion | API/manual |
 | SEC-001 | SQL injection | Quote/control payload in search input | Parameterized query; no SQL execution or DB error exposure | Security |
 | SEC-002 | XSS | Script markup in source/editorial text | Rendered as text or sanitized; no execution | Security |
 | SEC-003 | CSRF | Forged state-changing browser request | Rejected by session/origin/CSRF controls as applicable | Security |

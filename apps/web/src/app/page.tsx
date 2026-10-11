@@ -9,10 +9,10 @@ export default function HomePage() {
       <section className="hero">
         <p className="eyebrow">PAKISTANI LEGAL RESEARCH</p>
         <h1>Find the source.<br />Follow the law.</h1>
-        <p className="hero-copy">Search reviewed Federal Constitutional Court of Pakistan judgment metadata with links to the official source.</p>
+        <p className="hero-copy">Search reviewed Pakistani legal records, inspect their provenance, and open the official source. The current published pilot covers FCCP judgment metadata.</p>
         <CoverageSummary />
         <div className="hero-actions">
-          <Link className="button" href="/search">Search FCCP judgments</Link>
+          <Link className="button" href="/search?mode=case-law">Explore case law</Link>
           <Link className="button button-secondary" href="/saved">Open saved citations</Link>
         </div>
       </section>
@@ -21,12 +21,13 @@ export default function HomePage() {
           <p className="eyebrow">AVAILABLE IN THIS SLICE</p>
           <h2>Case Law</h2>
           <p>Find reviewed FCCP records by case identifier and inspect their source and checked date.</p>
-          <Link href="/search">Open search <span aria-hidden="true">&rarr;</span></Link>
+          <Link href="/search?mode=case-law">Open search <span aria-hidden="true">&rarr;</span></Link>
         </article>
         <article className="feature-card muted-card">
-          <p className="eyebrow">NEXT CORPUS</p>
+          <p className="eyebrow">EARLY CORPUS</p>
           <h2>Legislation</h2>
-          <p>Federal and provincial sources are being validated one portal at a time. No completeness claim is made.</p>
+          <p>Browse verified metadata from available sources. The local setup includes one labeled Pakistan Code sample; legal status remains unknown.</p>
+          <Link href="/search?mode=statutes">Open statutes search <span aria-hidden="true">&rarr;</span></Link>
         </article>
         <article className="feature-card muted-card">
           <p className="eyebrow">PERSONAL LIBRARY</p>

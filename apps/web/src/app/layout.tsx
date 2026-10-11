@@ -20,7 +20,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link className="brand" href="/">Student Law Site</Link>
             <nav aria-label="Main navigation" className="main-nav">
               <Link href="/">Home</Link>
-              <Link href="/search">Case Law</Link>
+              <Link href="/search?mode=case-law">Case Law</Link>
+              <Link href="/search?mode=statutes">Statutes</Link>
               <Link href="/saved">Saved Citations</Link>
               <Link href="/sign-in">Sign in</Link>
             </nav>
