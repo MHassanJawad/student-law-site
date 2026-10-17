@@ -21,6 +21,10 @@ For worker commands, copy `apps/worker/.env.example` to `apps/worker/.env` and s
 4. Open **Statutes**, search `Contract`, or filter by Federal / Act / 1872 / Unknown. Open the Contract Act record and follow its official Pakistan Code link. Its page is marked **LOCAL SAMPLE** and its legal status is unknown.
 5. Open a judgment detail. Check source attribution, checked date, version reference, and the official source link. The current metadata-only records have no public document text or sections.
 6. Optionally visit **Sign in**, create a local account, save a citation on a document, and reopen it under **Saved Citations**. Local Supabase Auth must be running.
+7. In **Saved Citations**, add a note and folder, filter the library, and export its JSON file. **Account settings** allows account deletion after entering the current password and `DELETE`; use a disposable test account for that check.
+8. Open **Maxims**, **Articles**, and **Dictionary** from the header. They show an empty state until reviewed entries are published. The operator editor is at `/editorial-studio` after the owner designates an operator account.
+
+Run `npm.cmd run test:phase5-local` for local row-level security, draft visibility, and account-deletion checks. It creates and cleans up temporary accounts and an editorial entry. The current minimal local stack does not run an SMTP inbox, so recovery email delivery is skipped in this check. To test recovery end to end, configure a local SMTP inbox and open the link sent by **Forgot your password?**; hosted email delivery requires separate setup and verification.
 
 ## When something is empty
 

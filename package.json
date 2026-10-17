@@ -13,7 +13,8 @@
     "review:fccp": "npm run review:fccp -w @student-law/worker --",
     "inspect:fccp-pdf": "npm run inspect:fccp-pdf -w @student-law/worker --",
     "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs",
-    "test:ingestion-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-ingestion-local.mjs"
+    "test:ingestion-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-ingestion-local.mjs",
+    "test:phase5-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-phase5-local.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

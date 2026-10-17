@@ -22,6 +22,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/">Home</Link>
               <Link href="/search?mode=case-law">Case Law</Link>
               <Link href="/search?mode=statutes">Statutes</Link>
+              <Link href="/learn/maxims">Maxims</Link>
+              <Link href="/learn/articles">Articles</Link>
+              <Link href="/learn/dictionary">Dictionary</Link>
               <Link href="/saved">Saved Citations</Link>
               <Link href="/sign-in">Sign in</Link>
             </nav>

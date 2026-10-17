@@ -10,4 +10,4 @@
 | Fetch, stage, and propose source records | No | No | No | Yes |
 | Override source rights status or bulk-publication gate | No | No | Owner decision recorded by operator | No |
 
-Supabase Auth supplies identity; `profiles.role` is server-managed and defaults to `student`. Do not accept role values from client input. Row-level security restricts saved citations to `auth.uid() = owner_id`; route handlers repeat ownership checks. Service-role credentials stay in the worker/server environment and never enter a browser bundle. Operator actions record actor, target, timestamp, and reason.
+Supabase Auth supplies identity; `profiles.role` is server-managed and defaults to `student`. Do not accept role values from client input. Row-level security restricts saved citations to `auth.uid() = owner_id`; route handlers repeat ownership checks. Service-role credentials stay in the worker/server environment and never enter a browser bundle. Editorial inserts and updates require the operator role through RLS, and a trigger stamps review metadata and audit history. The operator must confirm source and rights review in the editor before publishing.

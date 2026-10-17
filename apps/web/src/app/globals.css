@@ -126,3 +126,21 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .document-aside code{font-size:.85rem}
 @media(max-width:900px){.research-layout{grid-template-columns:1fr;gap:24px}.research-nav{position:static;display:flex;overflow-x:auto;gap:2px;border-bottom:1px solid var(--border)}.research-nav .eyebrow,.research-nav a span{display:none}.research-nav a{white-space:nowrap;border-left:0;border-bottom:3px solid transparent}.research-nav a[aria-current="page"]{border-bottom-color:var(--accent)}.document-layout{grid-template-columns:1fr}.document-aside{order:-1}}
 @media(max-width:600px){.research-page{padding-top:24px}.research-heading{margin-bottom:18px}.research-panel{padding:22px 18px}.research-panel-heading{display:block}.scope-pill{display:inline-block;margin-bottom:16px}.filter-grid{grid-template-columns:1fr}.research-form-footer{align-items:stretch;flex-direction:column}.research-form-footer .field{width:100%}.research-form-footer button{width:100%}.results-heading{display:block}.results-heading .meta{margin-top:0}}
+
+/* Personal library and editorial collections. */
+.library-toolbar{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr);gap:16px;margin:28px 0 14px}
+.library-toolbar .field input,.library-toolbar .field select,.saved-editor .field input,.saved-editor .field textarea{width:100%}
+.library-actions,.saved-controls{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap}
+.library-actions{margin:12px 0 20px}
+.saved-controls{align-self:flex-start}
+.saved-content{min-width:0;flex:1}
+.saved-editor{display:grid;gap:12px;margin-top:18px;max-width:560px}
+.saved-editor textarea{font:inherit;padding:10px 13px;border:1px solid #8b9b95;border-radius:4px;resize:vertical}
+.saved-note{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:14px}
+.editorial-grid{display:grid;gap:14px;margin-top:28px}
+.editorial-body{white-space:pre-wrap;max-width:74ch}
+.editorial-form{display:grid;gap:16px;margin-top:26px}
+.editorial-form .field input,.editorial-form .field select,.editorial-form .field textarea{width:100%}
+.editorial-form textarea{font:inherit;padding:10px 13px;border:1px solid #8b9b95;border-radius:4px;resize:vertical}
+.account-danger{border-top:1px solid var(--border);margin-top:36px;padding-top:26px}
+@media(max-width:600px){.library-toolbar{grid-template-columns:1fr}.saved-row{display:block}.saved-controls{margin-top:16px}}
