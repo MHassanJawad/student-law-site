@@ -2,6 +2,8 @@
 
 Requires Node.js 22, npm, Docker Desktop, and free disk space. Work from the repository root. These instructions use Windows PowerShell; use `npm` and `npx` in a shell where those commands work. The local Supabase stack is for development and should remain on localhost.
 
+For this Windows workspace, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-on-d.ps1` after opening Docker Desktop. The script places npm cache and process temporary files in ignored folders on D:, starts Supabase, applies pending local migrations without a reset, and starts the frontend. Docker's WSL disk image is already configured at `D:\DockerData\DockerDesktopWSL`. Windows and Docker Desktop still use some application/configuration files on C:; this script avoids putting project caches there.
+
 ## First setup
 
 1. Start Docker Desktop. Run `npm.cmd ci --legacy-peer-deps`.
