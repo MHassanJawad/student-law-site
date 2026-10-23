@@ -8,11 +8,12 @@ Date: 2026-10-23. This is the first verification pass on the local pilot, not a 
 - `npm audit --omit=dev --audit-level=high` now reports zero vulnerabilities.
 - `npm run lint`, `npm run typecheck`, `npm test` (24 unit tests), and `npm run build` pass on Windows with project caches and temporary files on D:.
 - Reviewed the account deletion and saved-citation API boundaries: both use a verified bearer session; account deletion also checks origin and the current password. Existing local integration checks cover cross-user saved-citation denial, editorial draft visibility, and deletion, but were not rerun in this pass.
+- Captured the home, case-law search, and sign-in pages in an isolated browser at a true 390px CSS viewport. Each had a 390px document scroll width. The five research modes initially required sideways scrolling; they now wrap into two visible rows on narrow screens. Screenshots and browser profile were kept in ignored `.tmp/browser-review` on D:. The initial Edge command-line screenshot used a wider CSS viewport and cropped it, so it was not used as evidence of a page overflow defect.
 
 ## Pending before a beta or public release
 
 - Docker Desktop was unavailable in this session. The local Supabase integration checks, migration lint, backup/restore drill, and ingestion failure drill still need a running local database. Do not reset the existing local database; use the migration command in [setup](../SETUP.md).
-- Perform desktop and narrow-screen keyboard and screen-reader checks on search, document, sign-in, saved citations, and editorial pages. Record defects and fixes.
+- Perform keyboard and screen-reader checks on search, document, sign-in, saved citations, and editorial pages. The computer-use browser helper exited twice during this pass, so interactive assistive-technology checks remain open.
 - Measure representative search latency and compare a fresh sample of published records with the linked official documents. Current measurements and corpus sizes in [Phase 4](phase-4-status.md) are pilot-only.
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
 - Verify recovery email delivery with the eventual email provider and complete a backup/restore drill before hosting real user data.
