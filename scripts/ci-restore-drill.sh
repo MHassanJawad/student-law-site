@@ -29,6 +29,10 @@ docker exec "$db_container" pg_dump -U postgres -d postgres -Fc \
   -t public.document_versions -t public.judgment_metadata \
   --file="$backup_path"
 docker exec "$db_container" createdb -U postgres -T template0 "$restore_db"
+# The selected judgment indexes use the trigram operator class supplied by
+# the project's first migration; table-only dumps do not include extensions.
+docker exec "$db_container" psql -U postgres -d "$restore_db" -v ON_ERROR_STOP=1 \
+  -c 'CREATE EXTENSION pg_trgm WITH SCHEMA public;'
 docker exec "$db_container" pg_restore -U postgres -d "$restore_db" --no-owner --no-acl --exit-on-error "$backup_path"
 
 sql='select (select count(*) from public.source_registry), (select count(*) from public.legal_documents), (select count(*) from public.document_versions), (select count(*) from public.judgment_metadata);'
