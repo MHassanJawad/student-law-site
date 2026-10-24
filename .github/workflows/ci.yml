@@ -26,7 +26,7 @@ jobs:
           npx supabase start
           npx supabase db reset --local
           npx supabase db lint --local
-      - name: Check search, accounts, import failure, and seeded latency
+      - name: Check search, accounts, latency, and public-page accessibility
         run: bash scripts/ci-verify-local.sh
       - name: Rehearse corpus backup and restore
         run: bash scripts/ci-restore-drill.sh
