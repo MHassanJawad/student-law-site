@@ -27,7 +27,7 @@ export LOCAL_WEB_URL='http://127.0.0.1:3000'
 export PHASE5_WEB_URL="$LOCAL_WEB_URL"
 export NEXT_TELEMETRY_DISABLED=1
 
-npm run dev -w @student-law/web > "${RUNNER_TEMP:-/tmp}/student-law-web.log" 2>&1 &
+npm run start -w @student-law/web > "${RUNNER_TEMP:-/tmp}/student-law-web.log" 2>&1 &
 web_pid=$!
 ready=0
 for _ in {1..45}; do
