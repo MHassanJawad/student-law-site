@@ -15,7 +15,12 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 850 } });
     const page = await context.newPage();
     const pageErrors = [];
+    const networkIssues = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("requestfailed", (request) => networkIssues.push(`${request.url()}: ${request.failure()?.errorText}`));
+    page.on("response", (response) => {
+      if (response.status() >= 400) networkIssues.push(`${response.status()} ${response.url()}`);
+    });
     for (const [name, path, ready] of [
       ["home", "/", "h1"],
       ["search", "/search?mode=case-law", "#research-query"],
@@ -28,7 +33,7 @@ try {
         await page.locator(ready).waitFor({ timeout: 12_000 });
       } catch (error) {
         const visible = (await page.locator("body").innerText()).slice(0, 1500);
-        throw new Error(`${name} did not render ${ready}. Visible text: ${visible}. Browser errors: ${JSON.stringify(pageErrors)}`, { cause: error });
+        throw new Error(`${name} did not render ${ready}. Visible text: ${visible}. Browser errors: ${JSON.stringify(pageErrors)}. Network issues: ${JSON.stringify(networkIssues.slice(-20))}`, { cause: error });
       }
       const result = await new AxeBuilder({ page }).analyze();
       const violations = result.violations.map((item) => ({
