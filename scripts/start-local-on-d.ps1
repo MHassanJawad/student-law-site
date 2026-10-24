@@ -1,4 +1,4 @@
-# Start the local stack with project caches and temporary files on D:.
+# Start the frontend with project caches and temporary files on D:.
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $runtimeRoot = Join-Path $projectRoot '.tmp'
@@ -18,10 +18,7 @@ $env:NEXT_TELEMETRY_DISABLED = '1'
 
 Push-Location $projectRoot
 try {
-  & npx.cmd supabase start
-  if ($LASTEXITCODE -ne 0) { throw 'Supabase did not start.' }
-  & npx.cmd supabase migration up --local
-  if ($LASTEXITCODE -ne 0) { throw 'Local migrations did not complete.' }
+  Write-Warning 'Docker Desktop is not started by this script. Research data needs an existing Supabase service; CI verifies the database without using this computer.'
   & npm.cmd run dev
   if ($LASTEXITCODE -ne 0) { throw 'The frontend did not start.' }
 } finally {

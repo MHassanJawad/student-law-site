@@ -1,10 +1,10 @@
 # Local development and frontend testing
 
-Requires Node.js 22, npm, Docker Desktop, and free disk space. Work from the repository root. These instructions use Windows PowerShell; use `npm` and `npx` in a shell where those commands work. The local Supabase stack is for development and should remain on localhost.
+Requires Node.js 22 and npm for the frontend. A local Supabase database normally also requires Docker Desktop. Work from the repository root. These instructions use Windows PowerShell; use `npm` and `npx` in a shell where those commands work. The local Supabase stack is for development and should remain on localhost.
 
-For this Windows workspace, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-on-d.ps1` after opening Docker Desktop. The script places npm cache and process temporary files in ignored folders on D:, starts Supabase, applies pending local migrations without a reset, and starts the frontend. Docker's WSL disk image is already configured at `D:\DockerData\DockerDesktopWSL`. Windows and Docker Desktop still use some application/configuration files on C:; this script avoids putting project caches there.
+**Current C: storage restriction:** Do not start local Docker Desktop or run Supabase commands on this computer. Its WSL disk image was moved to `D:\DockerData\DockerDesktopWSL`, but Docker Desktop is installed on C: and still keeps Windows configuration there. Moving the disk image alone cannot guarantee zero C: writes. Database, account, and ingestion checks run on GitHub's Linux CI runner instead. The frontend-only `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-on-d.ps1` sets project cache and temporary paths on D: and does not start Docker. Data requests will report unavailable without a database.
 
-## First setup
+## Full local setup after the C: storage restriction is resolved
 
 1. Start Docker Desktop. Run `npm.cmd ci --legacy-peer-deps`.
 2. Run `npx.cmd supabase start`. If this is a fresh local database, run `npx.cmd supabase db reset --local` to apply migrations and load two labeled metadata samples. **Reset deletes existing local database data.**

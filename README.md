@@ -4,7 +4,7 @@ Research platform for Pakistani law students, scoped to reviewed FCCP judgments 
 
 ## Quick start
 
-Use Node.js 22 and Docker Desktop. From the repository root, run `npm.cmd ci --legacy-peer-deps`, `npx.cmd supabase start`, then `npx.cmd supabase db reset --local` **only for a fresh disposable database**. Copy `.env.example` to `apps/web/.env.local` and fill in the local public URL and anon key from `npx.cmd supabase status`. Run `npm.cmd run dev` and open `http://localhost:3000`. Existing local databases should use `npx.cmd supabase migration up --local` to preserve reviewed pilot data. See the [frontend click path and full setup](docs/SETUP.md).
+Use Node.js 22. With C: full, do not start Docker Desktop locally: its WSL disk is on D:, but the Windows application still uses C:. CI runs the database checks on Linux. For a frontend-only preview, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-on-d.ps1`; project temporary and cache files go to D:, while data requests need a running database. See the [frontend click path and full setup](docs/SETUP.md) for the full local workflow after the storage restriction is resolved.
 
 Architecture: the web app serves public research pages and owner-scoped APIs; Supabase provides Auth/PostgreSQL; a separate worker handles controlled FCCP collection and review. See [system design](docs/DESIGN.md).
 
