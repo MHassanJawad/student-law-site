@@ -14,6 +14,8 @@ try {
   for (const width of [390, 1280]) {
     const context = await browser.newContext({ viewport: { width, height: 850 } });
     const page = await context.newPage();
+    const pageErrors = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
     for (const [name, path, ready] of [
       ["home", "/", "h1"],
       ["search", "/search?mode=case-law", "#research-query"],
@@ -22,7 +24,12 @@ try {
     ]) {
       const response = await page.goto(new URL(path, origin).toString(), { waitUntil: "domcontentloaded" });
       assert.equal(response?.status(), 200, `${name} should load`);
-      await page.locator(ready).waitFor();
+      try {
+        await page.locator(ready).waitFor({ timeout: 12_000 });
+      } catch (error) {
+        const visible = (await page.locator("body").innerText()).slice(0, 1500);
+        throw new Error(`${name} did not render ${ready}. Visible text: ${visible}. Browser errors: ${JSON.stringify(pageErrors)}`, { cause: error });
+      }
       const result = await new AxeBuilder({ page }).analyze();
       const violations = result.violations.map((item) => ({
         id: item.id, impact: item.impact, nodes: item.nodes.map((node) => node.target).slice(0, 5),
