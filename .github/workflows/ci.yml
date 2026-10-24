@@ -28,5 +28,5 @@ jobs:
           npx supabase db lint --local
       - name: Check search, accounts, and editorial isolation
         run: bash scripts/ci-verify-local.sh
-      - name: Rehearse database backup and restore
+      - name: Rehearse corpus backup and restore
         run: bash scripts/ci-restore-drill.sh

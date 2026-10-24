@@ -10,15 +10,15 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - Reviewed the account deletion and saved-citation API boundaries: both use a verified bearer session; account deletion also checks origin and the current password. Existing local integration checks cover cross-user saved-citation denial, editorial draft visibility, and deletion, but were not rerun in this pass.
 - Captured the home, case-law search, and sign-in pages in an isolated browser at a true 390px CSS viewport. Each had a 390px document scroll width. The five research modes initially required sideways scrolling; they now wrap into two visible rows on narrow screens. Screenshots and browser profile were kept in ignored `.tmp/browser-review` on D:. The initial Edge command-line screenshot used a wider CSS viewport and cropped it, so it was not used as evidence of a page overflow defect.
 - The first five keyboard focus targets on home, search, and sign-in start with the skip link and follow the header links in DOM order. This is a limited keyboard check, not a full assistive-technology review.
-- CI is configured to run the existing search/account and saved-citation/editorial isolation checks against its disposable Supabase stack, followed by a backup/restore drill into a separate temporary database. These new CI steps still need their first successful run.
+- CI runs the existing search/account and saved-citation/editorial isolation checks against its disposable Supabase stack. A separate-database restore drill covers the source and judgment corpus tables; it does not cover Auth or other Supabase-managed schemas.
 
 ## Pending before a beta or public release
 
-- Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI migration lint has passed on an isolated Linux runner; acceptance and restore checks are being added there. A restore of real user data and an ingestion failure drill remain pending.
+- Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI migration lint and account/search acceptance checks passed on an isolated Linux runner. A full restore of real user data and an ingestion failure drill remain pending.
 - Perform keyboard and screen-reader checks on search, document, sign-in, saved citations, and editorial pages. The computer-use browser helper exited twice during this pass, so interactive assistive-technology checks remain open.
 - Measure representative search latency and compare a fresh sample of published records with the linked official documents. Current measurements and corpus sizes in [Phase 4](phase-4-status.md) are pilot-only.
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
-- Verify recovery email delivery with the eventual email provider and complete a backup/restore drill before hosting real user data.
+- Verify recovery email delivery with the eventual email provider and complete a full backup/restore drill, including Auth, before hosting real user data.
 
 ## Tasks requiring human action
 

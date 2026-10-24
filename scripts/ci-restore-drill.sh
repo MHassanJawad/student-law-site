@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rehearse a full database restore on an isolated GitHub Linux runner.
+# Rehearse a corpus restore on an isolated GitHub Linux runner.
 set -Eeuo pipefail
 
 if [[ "${GITHUB_ACTIONS:-}" != 'true' || "${RUNNER_OS:-}" != 'Linux' ]]; then
@@ -22,15 +22,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker exec "$db_container" pg_dump -U postgres -d postgres -Fc --file="$backup_path"
+# Supabase manages its own schemas and Realtime functions. Restore the app's
+# source/corpus tables into a separate database without recreating those internals.
+docker exec "$db_container" pg_dump -U postgres -d postgres -Fc \
+  -t public.source_registry -t public.legal_documents \
+  -t public.document_versions -t public.judgment_metadata \
+  --file="$backup_path"
 docker exec "$db_container" createdb -U postgres -T template0 "$restore_db"
 docker exec "$db_container" pg_restore -U postgres -d "$restore_db" --no-owner --no-acl --exit-on-error "$backup_path"
 
-sql='select (select count(*) from public.source_registry), (select count(*) from public.legal_documents), (select count(*) from public.document_versions), (select count(*) from auth.users);'
+sql='select (select count(*) from public.source_registry), (select count(*) from public.legal_documents), (select count(*) from public.document_versions), (select count(*) from public.judgment_metadata);'
 original="$(docker exec "$db_container" psql -U postgres -d postgres -Atc "$sql")"
 restored="$(docker exec "$db_container" psql -U postgres -d "$restore_db" -Atc "$sql")"
 if [[ "$original" != "$restored" || "$original" == '0|0|0|0' ]]; then
-  echo 'Restored source, document, version, or account counts differ.' >&2
+  echo 'Restored source, document, version, or judgment counts differ.' >&2
   exit 1
 fi
-echo 'Disposable Supabase backup and restore drill passed.'
+echo 'Disposable Supabase corpus backup and restore drill passed.'
