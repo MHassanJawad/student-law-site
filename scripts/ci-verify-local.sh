@@ -44,3 +44,4 @@ fi
 
 node scripts/check-local.mjs
 node scripts/check-phase5-local.mjs
+node scripts/ci-ingestion-failure.mjs
