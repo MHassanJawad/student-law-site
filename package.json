@@ -1,7 +1,10 @@
 {
   "name": "student-law-site",
   "private": true,
-  "workspaces": ["apps/web", "apps/worker"],
+  "workspaces": [
+    "apps/web",
+    "apps/worker"
+  ],
   "scripts": {
     "dev": "npm run dev -w @student-law/web",
     "build": "npm run build -w @student-law/web",
@@ -17,9 +20,10 @@
     "test:phase5-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-phase5-local.mjs"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "vitest": "3.2.7",
+    "@types/node": "22.20.1",
     "supabase": "2.116.0",
-    "@types/node": "22.20.1"
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "5.0.5"
   }
 }
