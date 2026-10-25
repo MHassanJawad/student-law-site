@@ -19,14 +19,13 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
       - run: npm audit --audit-level=high
       - name: Validate local migrations
         run: |
           npx supabase start
           npx supabase db reset --local
           npx supabase db lint --local
-      - name: Check search, accounts, latency, and public-page accessibility
+      - name: Build and check search, accounts, latency, and accessibility
         run: bash scripts/ci-verify-local.sh
       - name: Rehearse corpus backup and restore
         run: bash scripts/ci-restore-drill.sh
