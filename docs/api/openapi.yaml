@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Student Law Site API
   version: 0.1.0
-  description: Public research reads expose published, approved, source-traceable records only. Private account operations use a validated Supabase bearer session.
+  description: Public research reads expose published, approved, source-traceable records only. Private account operations use a validated Supabase bearer session. Every path except /health is rate limited per client address per process; search allows 120 requests per minute, other public reads 240, account operations 60, and account deletion 5 per 15 minutes. A limited request returns 429 with Retry-After. During maintenance every path except /health returns 503.
 servers:
   - url: /api/v1
 tags:
@@ -11,6 +11,7 @@ tags:
   - name: Editorial
   - name: Account
   - name: Coverage
+  - name: Operations
 paths:
   /search/research:
     get:
@@ -190,6 +191,14 @@ paths:
         '400': {$ref: '#/components/responses/BadRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {description: Current password incorrect}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /health:
+    get:
+      tags: [Operations]
+      summary: Web and database availability for uptime monitoring; never rate limited
+      responses:
+        '200': {description: Configuration present and published data reachable, content: {application/json: {schema: {$ref: '#/components/schemas/Health'}}}}
+        '503': {description: Missing configuration, failed database check, or maintenance mode, content: {application/json: {schema: {$ref: '#/components/schemas/Health'}}}}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
@@ -206,6 +215,15 @@ components:
     Conflict: {description: Duplicate saved citation, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
     RateLimited: {description: Rate limit reached, headers: {Retry-After: {schema: {type: integer}}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
   schemas:
+    Health:
+      type: object
+      required: [status, checks, checkedAt]
+      properties:
+        status: {type: string, enum: [ok, unavailable, maintenance]}
+        checks: {type: object, properties: {configuration: {type: string, enum: [ok, missing]}, database: {type: string, enum: [ok, failed, skipped]}}}
+        databaseLatencyMs: {type: integer, nullable: true}
+        version: {type: string, nullable: true}
+        checkedAt: {type: string, format: date-time}
     Error:
       type: object
       required: [error]
