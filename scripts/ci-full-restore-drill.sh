@@ -22,7 +22,7 @@ export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-${ANON_KEY:?A pu
 export SUPABASE_SERVICE_ROLE_KEY="${SERVICE_ROLE_KEY:-${SECRET_KEY:?A service-role key is required}}"
 
 node scripts/ci-full-restore-fixture.mjs create "$fixture_path"
-npx supabase db dump --local --data-only --use-copy --file "$backup_path"
+npx supabase db dump --local --schema auth,public --data-only --use-copy --file "$backup_path"
 if [[ ! -s "$backup_path" ]]; then
   echo 'Supabase data dump is empty.' >&2
   exit 1
