@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added per-client API rate limits that return `429` with `Retry-After`, as the API contract specifies.
+- Added Content-Security-Policy, HSTS, and Cross-Origin-Opener-Policy headers.
+- Added a health check at `/api/v1/health` and an operator maintenance mode.
+- Added About/terms and Privacy pages, linked from the footer.
+- Added a production Dockerfile, with CI jobs for the container image, secret scanning, and security controls, plus Dependabot.
+- Added security, data privacy, deployment, runbook, licence, contributing, and launch-readiness documentation.
+
 - Added Phase 4 Case Law, Courtwise, Citation, Advanced, and Statutes research screens with validated filters, exact counts, sorting, and source-linked document detail.
 - Added a local Pakistan Code legislation metadata sample, labeled with unknown legal status, and documented frontend testing steps.
 - Extended the FCCP importer to validate and stage a bounded 12-page listing, track missing metadata, and quarantine records absent from complete snapshots.

@@ -17,6 +17,31 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - [CI run 40186979201](https://github.com/MHassanJawad/student-law-site/actions/runs/40186979201) built the frontend after starting disposable Supabase, then signed in through the browser and checked the saved library, open note editor, account settings, and operator studio at 390px and 1280px. Axe reported no violations on these pages or the previously checked public pages. This covers rendered states, not screen-reader announcements or the full keyboard interaction sequence.
 - Prepared a [small student beta script](beta-session.md) with concrete phone, desktop, and keyboard tasks. No testers have been recruited or invited yet.
 
+## Security and launch-readiness pass
+
+- The API contract promised `429` responses, but none were implemented. Added per-client, in-memory rate limits in `src/proxy.ts`:
+  - Search: 120 per minute.
+  - Other public reads: 240 per minute.
+  - Account operations: 60 per minute.
+  - Account deletion: 5 per 15 minutes.
+
+  The client address is read from the right of `X-Forwarded-For`, so a client cannot spoof it behind a trusted proxy. Unit tests cover the rules, windows, key bound, and address parsing.
+- Added Content-Security-Policy, HSTS, and Cross-Origin-Opener-Policy to the existing headers. The browser check now also fails on any CSP violation.
+- Added `GET /api/v1/health` and `MAINTENANCE_MODE`.
+- Added `/about`, with scope, disclaimer, and terms of use, and `/privacy`, a privacy notice written from the actual data inventory. Both are linked from the footer and included in the axe check.
+- Added CI checks:
+  - `ci-security-checks.mjs` covers headers, health, a SQL-injection payload, unauthenticated `/me` denial, and an observed `429` with `Retry-After`.
+  - A container job builds the [Dockerfile](../../Dockerfile), then checks pages, headers, the non-root user, and an honest `503` health status without a database.
+  - A gitleaks history scan.
+  - Dependabot for npm, Actions, and Docker.
+- Local results on Windows:
+  - Lint, typecheck, 36 unit tests (12 new), the default build, and the standalone build all pass.
+  - Against the built server, the CSP and HSTS headers were present.
+  - Health returned `503` with `database: failed`, because no local database runs.
+  - Exactly 240 reads were allowed before `429` with `Retry-After: 60`.
+  - The new CI jobs need a pull request run to confirm.
+- Added the [security](../SECURITY.md), [data privacy](../DATA_PRIVACY.md), [deployment](../DEPLOYMENT.md), [runbook](../RUNBOOK.md), [licence inventory](../THIRD_PARTY_LICENSES.md), and [launch readiness](launch-readiness.md) documents.
+
 ## Pending before a beta or public release
 
 - Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI database checks run on an isolated Linux runner. Restore of real user data and non-database assets remains pending before hosting users.
@@ -24,6 +49,8 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - Measure search latency with a larger, representative corpus and compare fresh published records with their linked official documents. CI holds only labeled metadata samples; the separately reviewed FCCP pilot record remains in the owner's local database, which is unavailable while local Docker stays off.
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
 - Verify recovery email delivery with the eventual email provider, and test a hosted backup/restore path, including database data and any stored PDFs, before hosting real user data.
+
+- Build an upsert-based corpus sync from the operator's review database to the hosted database before publishing records after the first hosted load. See the [runbook](../RUNBOOK.md#routine-schedule).
 
 ## Tasks requiring human action
 
