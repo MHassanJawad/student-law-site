@@ -36,6 +36,7 @@ assert.ifError(saveError);
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_BIN });
 const problems = [];
+const cspViolations = [];
 async function audit(page, name, width) {
   const result = await new AxeBuilder({ page }).analyze();
   const violations = result.violations.map((item) => ({
@@ -51,6 +52,9 @@ try {
     const pageErrors = [];
     const networkIssues = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error" && /Content Security Policy/i.test(message.text())) cspViolations.push(message.text());
+    });
     page.on("requestfailed", (request) => networkIssues.push(`${request.url()}: ${request.failure()?.errorText}`));
     page.on("response", (response) => {
       if (response.status() >= 400) networkIssues.push(`${response.status()} ${response.url()}`);
@@ -60,6 +64,8 @@ try {
       ["search", "/search?mode=case-law", "#research-query"],
       ["sign_in", "/sign-in", "#email"],
       ["document", "/documents/22222222-2222-4222-8222-222222222222", "h1#overview"],
+      ["about", "/about", "h1"],
+      ["privacy", "/privacy", "h1"],
     ]) {
       const response = await page.goto(new URL(path, origin).toString(), { waitUntil: "domcontentloaded" });
       assert.equal(response?.status(), 200, `${name} should load`);
@@ -99,3 +105,4 @@ try {
   assert.ifError(error);
 }
 assert.deepEqual(problems, [], "Serious or critical accessibility issues were found.");
+assert.deepEqual(cspViolations, [], "The content security policy blocked a page resource.");

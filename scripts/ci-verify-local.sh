@@ -49,3 +49,5 @@ node scripts/ci-ingestion-failure.mjs
 node scripts/ci-search-latency.mjs
 export CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
 node scripts/ci-accessibility.mjs
+# Runs last because it deliberately exhausts this client's public API rate limit.
+node scripts/ci-security-checks.mjs
