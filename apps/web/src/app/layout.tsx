@@ -33,6 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <main id="main" className="site-main">{children}</main>
         <footer className="site-footer">
           <p>Educational research only. This site is not legal advice or an official government publication. Verify documents at their linked official source.</p>
+          <nav aria-label="Site information" className="footer-nav">
+            <Link href="/about">About and terms</Link>
+            <Link href="/privacy">Privacy</Link>
+          </nav>
         </footer>
       </body>
     </html>

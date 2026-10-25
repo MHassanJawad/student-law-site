@@ -67,6 +67,8 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .saved-row{display:flex;justify-content:space-between;align-items:center;gap:20px}
 .site-footer{border-top:1px solid var(--border);padding:24px;max-width:1160px;margin:auto;color:var(--muted);font-size:.88rem}
 .site-footer p{margin:0}
+.footer-nav{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:12px}
+.footer-nav a{display:inline-block;min-height:24px;color:var(--text);font-weight:700}
 @media(max-width:760px){.feature-grid{grid-template-columns:1fr}.feature-card{min-height:unset}.page-wrap{padding-top:32px}.hero{padding:28px 0 44px}.search-row{flex-direction:column}.document-meta{grid-template-columns:1fr}.header-inner{padding:16px}.main-nav{gap:8px 16px}.saved-row{align-items:flex-start}}
 
 /* Phase 4 research workspace: restrained editorial structure for dense records. */
