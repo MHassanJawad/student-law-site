@@ -34,6 +34,21 @@ assert.ok((await stillSearchable.json()).total >= 1, "Corpus should be intact af
 const anonymous = await fetch(new URL("/api/v1/me/saved-citations", origin));
 assert.equal(anonymous.status, 401);
 
+// Worker-only publication functions must refuse the public key before reaching their own checks.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+assert.ok(supabaseUrl && publicKey, "Public Supabase settings are required.");
+for (const fn of ["approve_fccp_candidate", "withdraw_fccp_candidate", "approve_legislation_candidate"]) {
+  const response = await fetch(new URL(`/rest/v1/rpc/${fn}`, supabaseUrl), {
+    method: "POST",
+    headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_candidate_id: "00000000-0000-4000-8000-000000000000", p_review_note: "anonymous attempt" }),
+  });
+  const body = await response.json();
+  assert.ok([401, 403, 404].includes(response.status) && body.code !== "P0001",
+    `${fn} must deny anonymous callers; got ${response.status} ${JSON.stringify(body)}`);
+}
+
 // SEC-006: the public read bucket allows 240 requests per minute per client.
 let limited = null;
 for (let attempt = 0; attempt < 260 && !limited; attempt += 1) {
