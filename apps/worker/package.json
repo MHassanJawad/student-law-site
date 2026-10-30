@@ -7,6 +7,9 @@
     "ingest:fccp": "node --env-file=.env --import tsx src/ingest-fccp.ts",
     "review:fccp": "node --env-file=.env --import tsx src/review-fccp.ts",
     "inspect:fccp-pdf": "node --env-file=.env --import tsx src/inspect-fccp-pdf.ts",
+    "ingest:pakistan-code": "node --env-file=.env --import tsx src/ingest-pakistan-code.ts",
+    "review:legislation": "node --env-file=.env --import tsx src/review-legislation.ts",
+    "sync:corpus": "node --env-file=.env --import tsx src/sync-corpus.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
