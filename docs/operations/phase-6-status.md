@@ -42,6 +42,19 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
   - The new CI jobs need a pull request run to confirm.
 - Added the [security](../SECURITY.md), [data privacy](../DATA_PRIVACY.md), [deployment](../DEPLOYMENT.md), [runbook](../RUNBOOK.md), [licence inventory](../THIRD_PARTY_LICENSES.md), and [launch readiness](launch-readiness.md) documents.
 
+## Legislation importer and corpus sync
+
+- Reviewed Pakistan Code access on 2026-10-30: robots.txt restricts only Googlebot from `/pdffiles/`, and the disclaimer says every law is under review. Added a bounded, one-letter-per-run importer for the Federal Laws tab, a private `legislation_candidates` queue (migration 017), an atomic approve function, and a review CLI. See the [runbook](pakistan-code-ingestion.md).
+- A live parse on the same day found:
+  - A: 53 candidates;
+  - C: 105 candidates, none rejected;
+  - P: 194 candidates and one repeated row, rejected.
+
+  Nothing was staged or published, because local Supabase is off.
+- Added `npm run sync:corpus`, which upserts published, withdrawn, and quarantined records, with their versions, metadata, and sections, to a hosted target. Dry run is the default. It also replaces the manual dump for the first hosted load.
+- Found and fixed a privilege gap (migration 018). Supabase's default `EXECUTE` grants let the public key call the worker-only FCCP approve and withdraw functions; an anonymous caller still needed an unguessable candidate UUID. CI now checks that all three functions refuse the public key.
+- `ci-legislation-sync.mjs` covers fixture import idempotence, the source-approval gate, publication into statutes search with unknown status, and an idempotent sync. These checks run only in CI.
+
 ## Pending before a beta or public release
 
 - Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI database checks run on an isolated Linux runner. Restore of real user data and non-database assets remains pending before hosting users.
@@ -50,7 +63,7 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
 - Verify recovery email delivery with the eventual email provider, and test a hosted backup/restore path, including database data and any stored PDFs, before hosting real user data.
 
-- Build an upsert-based corpus sync from the operator's review database to the hosted database before publishing records after the first hosted load. See the [runbook](../RUNBOOK.md#routine-schedule).
+- Run the corpus sync against a real hosted project for the first time. CI has only run it with the local database as both source and target.
 
 ## Tasks requiring human action
 

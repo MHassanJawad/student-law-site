@@ -25,21 +25,20 @@ Updated 2026-10-25. Status: **not ready for a public launch.** The engineering c
 | Monitoring and source freshness schedule | Defined in the [runbook](../RUNBOOK.md); uptime monitor not yet created |
 | Privacy notice, terms, disclaimer | Pages at `/privacy` and `/about`; need review and a support address |
 | Coverage wording matches verified coverage | Home shows measured counts and states the site is not a complete archive |
-| Hosted corpus updates after launch | **Gap:** an upsert-based corpus sync from the review database is not built |
+| Hosted corpus updates after launch | `npm run sync:corpus` upserts reviewed records and status changes; CI checks it against the real schema and confirms a rerun changes nothing |
 | Operational owner and alert responsibility | **Pending owner** |
 | Support channel | **Pending:** set `NEXT_PUBLIC_SUPPORT_EMAIL` |
 
 ## Scope that a launch would actually have
 
 - One reviewed FCCP judgment metadata record out of 110 staged candidates, plus the Phase 2 fixture and any further records the owner reviews before launch. No judgment text or summaries.
-- At most one legislation metadata sample, of unknown status. No legislation adapter exists yet.
+- Federal laws reviewed from the Pakistan Code listing (metadata only, legal status unknown), plus the local Contract Act sample. A bounded importer exists; nothing is published until the owner reviews each record.
 - Empty Maxims, Articles, and Dictionary collections unless reviewed entries are published.
 
 That scope suits a closed student beta. It is too thin for a public launch announced as a legal research site. The recommended order is:
 1. Staging and the beta.
-2. Legislation adapter and corpus growth.
-3. Corpus sync.
-4. Public launch.
+2. Corpus growth: review FCCP and Pakistan Code candidates.
+3. Public launch.
 
 ## Decision
 

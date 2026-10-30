@@ -13,7 +13,7 @@ Operator laptop: worker + local Supabase review database ──(reviewed corpus 
 
 - **Web:** the [Dockerfile](../Dockerfile) image on any container host that terminates TLS and sets `X-Forwarded-For`. One instance keeps the in-memory rate limits exact (see [security](SECURITY.md#known-limitations-and-deferred-items)).
 - **Database and Auth:** one hosted Supabase project per environment (staging, then production). Never share a project between them.
-- **Worker:** stays on the operator's machine against local Supabase. It refuses remote URLs by design. Reviewed records are copied to the hosted database as described below. Running the worker directly against a hosted database needs a recorded decision and a change to that guard.
+- **Worker:** stays on the operator's machine against local Supabase, and the importers refuse remote URLs by design. Reviewed records reach the hosted database only through `npm run sync:corpus`, which reads from local Supabase and upserts into the target.
 
 ## Hosting options and budget
 
@@ -42,15 +42,12 @@ The owner's ceiling is below PKR 10,000 per month. Prices change; check each pro
    - Turn email confirmation **on**.
    - Configure custom SMTP and send a test recovery email.
    - Review Auth rate limits for sign-in, sign-up, and recovery emails.
-4. **Load the reviewed corpus.** Do this only before any real accounts exist. From the operator machine with local Supabase running:
+4. **Load the reviewed corpus** with the corpus sync. From the operator machine with local Supabase running, add the hosted `TARGET_SUPABASE_URL` and `TARGET_SUPABASE_SERVICE_ROLE_KEY` to `apps/worker/.env`, then run:
    ```bash
-   npx supabase db dump --local --data-only --use-copy --schema public \
-     -x public.profiles -x public.saved_citations -x public.editorial_entries -x public.editorial_audit \
-     -x public.ingestion_runs -x public.ingestion_candidates -x public.pdf_inspections \
-     --file corpus.sql
-   psql "<hosted connection string>" --single-transaction -v ON_ERROR_STOP=1 -f corpus.sql
+   npm run sync:corpus            # dry run: prints how many rows each table would receive
+   npm run sync:corpus -- --apply
    ```
-   Decide first whether the labeled local seed records (the Phase 2 FCCP fixture and the `LOCAL SAMPLE` Contract Act) belong in the hosted corpus. Delete them locally or after loading if not. Keep `corpus.sql` out of the repository. This is a one-time load: later corpus updates need an upsert-based sync that is not built yet (see the [runbook](RUNBOOK.md#routine-schedule)).
+   The sync copies only sources and documents that are published, withdrawn, or quarantined, along with their versions, metadata, and sections. Staged records, review queues, accounts, and editorial content stay local. It only upserts, so rerunning it is safe. Decide first whether the labeled local seed records belong in the hosted corpus: the Phase 2 FCCP fixture and the `LOCAL SAMPLE` Contract Act. If not, withdraw them locally before the first sync.
 5. **Build the image** with the hosted public settings:
    ```bash
    docker build \

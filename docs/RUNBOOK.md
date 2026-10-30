@@ -18,7 +18,8 @@ The health endpoint is not rate limited and returns `503` with a reason during m
 ## Routine schedule
 
 - **Weekly:** check uptime history and review Dependabot pull requests.
-- **Every two weeks:** run a bounded FCCP listing check (`npm run ingest:fccp -- --all`), then review new or quarantined candidates using the [FCCP runbook](operations/fccp-ingestion.md). Publishing those records to the hosted database needs an upsert-based corpus sync, which is **not built yet**. The initial-load dump cannot be reapplied: it conflicts with existing rows. Never truncate corpus tables on a hosted database either; saved citations reference `legal_documents`, so a cascade would delete users' data.
+- **Monthly, a few letters at a time:** run `npm run ingest:pakistan-code -- --letter <A-Z>` and review new or changed federal laws using the [Pakistan Code runbook](operations/pakistan-code-ingestion.md), then run the corpus sync.
+- **Every two weeks:** run a bounded FCCP listing check (`npm run ingest:fccp -- --all`), then review new or quarantined candidates using the [FCCP runbook](operations/fccp-ingestion.md). Then run `npm run sync:corpus` to see the planned upserts, and `npm run sync:corpus -- --apply` to publish the changes to the hosted database. The sync never deletes rows. Never truncate corpus tables on a hosted database: saved citations reference `legal_documents`, so a cascade would delete users' data.
 - **Monthly:**
   - Run a quality review: sample five published records against their official sources (TC-019) and record mismatches.
   - Run `npm audit`.
@@ -31,7 +32,7 @@ The health endpoint is not rate limited and returns `503` with a reason during m
 - **Restart:** redeploy or restart the current image tag on the host. In-memory rate-limit counts reset.
 - **Maintenance mode:** set `MAINTENANCE_MODE=on` and restart. Pages and APIs return `503` with `Retry-After`; health reports `maintenance`. Unset the variable and restart to resume.
 - **Rollback:** see [deployment rollback](DEPLOYMENT.md#rollback).
-- **Withdraw a record:** run `npm run review:fccp -- withdraw <candidate-uuid> "<reason>"` locally. The hosted database has no review queue, so until the corpus sync exists, also run this on the hosted database with service-role access: `update public.legal_documents set publication_status = 'withdrawn', updated_at = now() where id = '<document-id>';`. The document ID is the one returned by the local withdraw command. Until then, the hosted record stays published.
+- **Withdraw a record:** run `npm run review:fccp -- withdraw <candidate-uuid> "<reason>"` locally. Then run `npm run sync:corpus -- --apply`; the withdrawn status is copied to the hosted record. Until then, the hosted record stays published.
 - **Promote an operator:** with service-role access, run `update public.profiles set role = 'operator' where id = '<user-id>';`. Enable MFA for that account first.
 - **Account help:** users export and delete their own data in account settings. The owner can trigger a password reset email from Supabase Auth; never ask for or handle a user's password.
 

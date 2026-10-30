@@ -23,6 +23,8 @@ Updated 2026-10-25. Scope: the Next.js web app, Supabase Auth/PostgreSQL, and th
 - **Headers:** `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, and `Cross-Origin-Opener-Policy` on every response. CI checks them on the build and the container image.
 - **Rate limits:** Search 120/min, other public reads 240/min, account operations 60/min, and account deletion 5 per 15 minutes per client address. Exceeding a limit returns `429` with `Retry-After`. `/api/v1/health` is exempt.
 - **Supply chain:** Exact dependency versions and a lockfile; `npm audit --audit-level=high` in CI; Dependabot for npm, GitHub Actions, and the Docker base image; [licence inventory](THIRD_PARTY_LICENSES.md).
+- **Worker-only functions:** Supabase grants browser roles `EXECUTE` on new functions by default. Migration 018 revokes the FCCP approve and withdraw functions from `anon` and `authenticated`, and the legislation approve function is revoked from them when it is created. CI calls each one with the public key and expects a refusal.
+- **Corpus sync:** reads only from local Supabase and requires an HTTPS target unless the CI-only `--allow-local-target` flag is given. It defaults to a dry run, upserts only, and never touches account, editorial, or review-queue tables.
 - **Container:** Multi-stage build, Alpine base, non-root `node` user, no secrets in the image. CI checks the image does not run as root.
 
 ## Known limitations and deferred items

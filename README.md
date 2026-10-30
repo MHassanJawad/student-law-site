@@ -37,6 +37,7 @@ Architecture: the web app serves public research pages and owner-scoped APIs. Su
   - [Runbook](docs/RUNBOOK.md)
   - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
   - [FCCP ingestion](docs/operations/fccp-ingestion.md)
+  - [Pakistan Code ingestion](docs/operations/pakistan-code-ingestion.md)
   - [Launch readiness](docs/operations/launch-readiness.md)
 - Security and compliance:
   - [Security](docs/SECURITY.md)
@@ -46,7 +47,7 @@ Architecture: the web app serves public research pages and owner-scoped APIs. Su
 - Phase status: [2](docs/operations/phase-2-status.md), [3](docs/operations/phase-3-status.md), [4](docs/operations/phase-4-status.md), [5](docs/operations/phase-5-status.md), [6](docs/operations/phase-6-status.md)
 - Contributing: [contributing](CONTRIBUTING.md), [commit convention](COMMIT_CONVENTION.md), [changelog](CHANGELOG.md)
 
-The FCCP ingestion pilot is manually triggered and stages records privately before review. The local Pakistan Code sample contains metadata only and has unknown current legal status.
+The FCCP and Pakistan Code importers are manually triggered and stage records privately for review. Published legislation carries metadata only and an unknown legal status. `npm run sync:corpus` copies reviewed records to a hosted database.
 
 ## License
 

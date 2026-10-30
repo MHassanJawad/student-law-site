@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a bounded Pakistan Code importer for federal laws. It stages one letter page at a time privately, holds listing metadata only, publishes nothing until reviewed, and always shows legal status as unknown.
+- Added `npm run sync:corpus`, an upsert-only copy of reviewed records and status changes from the review database to a hosted database.
+- Fixed worker-only publication functions being callable with the public key under Supabase's default privileges.
 - Added per-client API rate limits that return `429` with `Retry-After`, as the API contract specifies.
 - Added Content-Security-Policy, HSTS, and Cross-Origin-Opener-Policy headers.
 - Added a health check at `/api/v1/health` and an operator maintenance mode.

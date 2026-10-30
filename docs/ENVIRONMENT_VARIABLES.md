@@ -11,5 +11,7 @@
 | `NEXT_OUTPUT` | Web build | No | `standalone` produces the self-contained server used by the [Dockerfile](../Dockerfile). Leave unset for `next start`. |
 | `SUPABASE_URL` | Worker | Yes, worker | Local API URL for fixture import. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Worker only | Yes, worker | Privileged import key. Secret; never add `NEXT_PUBLIC_`, commit it, or send it to the browser. |
+| `TARGET_SUPABASE_URL` | Corpus sync only | For `sync:corpus` | Hosted Supabase API URL that receives reviewed corpus records. Must be HTTPS. |
+| `TARGET_SUPABASE_SERVICE_ROLE_KEY` | Corpus sync only | For `sync:corpus` | Hosted service-role key. Secret; keep it only in `apps/worker/.env` on the operator machine. |
 
 The root `.env.example` contains only public web settings; copy it to `.env.local`. The worker's separate `apps/worker/.env.example` includes its privileged key; copy it to `apps/worker/.env`. `.gitignore` excludes both local files. The sample importer refuses a remote URL. Production secrets require a hosting secrets manager and a distinct worker deployment. The web app holds no secret: its only keys are public and rely on RLS.
