@@ -64,6 +64,12 @@ async function stage(client: SupabaseClient, source: string, listingUrl: string,
   const { error } = await client.from("legislation_candidates")
     .update({ detail_url: item.detailUrl, last_seen_at: now }).eq("id", previous.id);
   if (error) throw error;
+  if (previous.review_status === "approved") {
+    const { error: linkError } = await client.from("legal_documents")
+      .update({ canonical_url: item.detailUrl, updated_at: now })
+      .eq("source_id", source).eq("source_item_id", item.identityHash).eq("publication_status", "published");
+    if (linkError) throw linkError;
+  }
   return "unchanged";
 }
 
@@ -93,7 +99,7 @@ async function main(): Promise<void> {
       listing_hash: createHash("sha256").update(page.html).digest("hex"),
       observed_count: parsed.candidates.length + parsed.rejected.length, staged_count: counts.staged,
       unchanged_count: counts.unchanged, quarantined_count: counts.quarantined, rejected_count: parsed.rejected.length,
-      error_summary: issues, pages_fetched: file ? 0 : 1, missing_upload_date_count: parsed.missingDates,
+      error_summary: issues, pages_fetched: file ? 0 : 1,
     }).eq("id", run.id);
     if (error) throw error;
     const { error: sourceError } = await client.from("source_registry")

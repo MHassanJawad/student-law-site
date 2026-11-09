@@ -1,6 +1,10 @@
 // Exercise the Pakistan Code importer offline, reviewed publication, and the corpus sync on CI's disposable stack.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.SUPABASE_URL;
@@ -59,6 +63,38 @@ assert.deepEqual(
   [found.items[0].jurisdiction, found.items[0].enactmentYear, found.items[0].citation, found.items[0].legalStatus],
   ["Federal", 1996, "VII of 1996", "unknown"],
   "Published legislation keeps source metadata and never asserts current legal status.");
+
+// A moved official link refreshes the published record; a changed row leaves search until re-reviewed.
+const fixtureHtml = await readFile(fixture[1], "utf8");
+async function ingestVariant(html) {
+  const path = join(tmpdir(), `pakistan-code-${randomUUID()}.html`);
+  await writeFile(path, html);
+  try {
+    return json(worker("ingest-pakistan-code.ts", ["--file", path, "--letter", "A"]));
+  } finally {
+    await rm(path);
+  }
+}
+const moved = await ingestVariant(fixtureHtml.replace("apqVaw%3D%3D", "movedLink"));
+assert.deepEqual([moved.unchanged, moved.quarantined], [2, 0], "A moved link alone is not a metadata change.");
+const { data: linked, error: linkedError } = await admin.from("legal_documents")
+  .select("canonical_url").eq("id", approved.data).single();
+assert.ifError(linkedError);
+assert.match(linked.canonical_url, /movedLink/, "The published record should carry the new official link.");
+
+const changed = await ingestVariant(fixtureHtml.replace("December 01 1996", "December 02 1996"));
+assert.equal(changed.quarantined, 1);
+assert.equal((await statutes("Whipping")).total, 0, "A changed law must leave search until re-reviewed.");
+const accepted = worker("review-legislation.ts", ["accept-change", candidate.id, "CI compared the changed date"]);
+assert.equal(accepted.status, 0, accepted.stderr);
+const reapproved = await admin.rpc("approve_legislation_candidate", { p_candidate_id: candidate.id, p_review_note: "CI re-reviewed the changed date" });
+assert.ifError(reapproved.error);
+assert.equal(reapproved.data, approved.data, "Re-approval should keep the same document.");
+const { data: version, error: versionError } = await admin.from("legal_documents")
+  .select("document_versions!legal_documents_current_version_fk(raw_metadata)").eq("id", approved.data).single();
+assert.ifError(versionError);
+assert.equal(version.document_versions.raw_metadata.promulgation_date, "1996-12-02");
+assert.equal((await statutes("Whipping")).total, 1, "A re-reviewed law returns to search.");
 
 const tables = ["source_registry", "legal_documents", "document_versions", "judgment_metadata", "legislation_metadata"];
 const before = await Promise.all(tables.map(count));
