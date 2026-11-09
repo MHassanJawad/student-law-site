@@ -36,7 +36,7 @@ Observed on 2026-10-30:
 
 ## Operation
 
-Same setup as the [FCCP runbook](fccp-ingestion.md): local Supabase and `apps/worker/.env`. On Windows, use `npm.cmd`.
+Same setup as the [FCCP runbook](fccp-ingestion.md): local Supabase and `apps/worker/.env`. On Windows, use `npm.cmd`. The portal does not send its intermediate TLS certificate, so the npm scripts pass Node's `--use-system-ca`. Certificates are still verified; never set `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 
 1. `npm run ingest:pakistan-code -- --letter A` fetches robots.txt and one letter page, then stages candidates privately. The JSON report gives staged, unchanged, quarantined, rejected, excluded-tab, and missing-date counts. Wait between letters; there is no reason to fetch the whole alphabet at once.
 2. `npm run review:legislation -- list pending 1` shows 25 candidates at a time with their official detail links. Open the link and compare the title, number, and date with the official page.

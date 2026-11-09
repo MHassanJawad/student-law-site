@@ -55,9 +55,21 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - Found and fixed a privilege gap (migration 018). Supabase's default `EXECUTE` grants let the public key call the worker-only FCCP approve and withdraw functions; an anonymous caller still needed an unguessable candidate UUID. CI now checks that all three functions refuse the public key.
 - `ci-legislation-sync.mjs` covers fixture import idempotence, the source-approval gate, publication into statutes search with unknown status, and an idempotent sync. These checks run only in CI.
 
+## Local database run (2026-11-09)
+
+Run on Windows with Docker data on D:, in a throwaway Supabase project (`student-law-ci`) so the checks could not touch the owner's pilot database. The scripts' `GITHUB_ACTIONS` guard was set by hand for that stack, and Edge replaced Chrome.
+
+- Migrations 001-018 applied to a fresh database; `supabase db lint` reported no schema errors.
+- Passed: account isolation, the Phase 5 lifecycle, the offline ingestion failure drill, `ci-legislation-sync.mjs` (now also covering a moved link and a changed-then-re-reviewed law), axe at 390px and 1280px on all pages with no CSP violations, and `ci-security-checks.mjs`.
+- Latency on the small seeded corpus: p95 79 ms case law, 29 ms statutes, 33 ms empty citation, 42 ms document detail.
+- The container image built (230 MB) and passed its smoke test. gitleaks found no leaks in 37 commits.
+- Not rerun: the two restore drills, which refuse anything but the GitHub Linux runner, and the new CI jobs on GitHub itself.
+- On the owner's local database, after a backup: applied migrations 017 and 018 with `migration up`. The 110 FCCP candidates and 3 published records were unchanged, and `test:ingestion-local` passed. A live import of letter A staged 53 laws privately; none were published and the source remains disabled.
+- Local Docker needs `memory=4GB` and a D: `swapFile` in `.wslconfig`. Without the cap, starting the VM grew `C:\pagefile.sys` by about 3.5 GB.
+
 ## Pending before a beta or public release
 
-- Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI database checks run on an isolated Linux runner. Restore of real user data and non-database assets remains pending before hosting users.
+- Restore of real user data and non-database assets remains pending before hosting users.
 - Perform full keyboard and screen-reader checks on search, document, sign-in, saved citations, and editorial pages. The automated axe/skip-link checks now cover signed-in rendered states, but not screen-reader announcements or complete keyboard interactions. The computer-use browser helper exited twice during the earlier manual pass, so interactive assistive-technology checks remain open.
 - Measure search latency with a larger, representative corpus and compare fresh published records with their linked official documents. CI holds only labeled metadata samples; the separately reviewed FCCP pilot record remains in the owner's local database, which is unavailable while local Docker stays off.
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
