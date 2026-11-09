@@ -74,6 +74,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : "Review failed"}\n`);
+  process.stderr.write(`${(error as { message?: string } | null)?.message ?? "Review failed"}\n`);
   process.exitCode = 1;
 });

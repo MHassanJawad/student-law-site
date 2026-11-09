@@ -72,6 +72,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : "Corpus sync failed"}\n`);
+  process.stderr.write(`${(error as { message?: string } | null)?.message ?? "Corpus sync failed"}\n`);
   process.exitCode = 1;
 });

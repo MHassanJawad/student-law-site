@@ -110,13 +110,13 @@ async function main(): Promise<void> {
   } catch (error) {
     await client.from("ingestion_runs").update({
       finished_at: new Date().toISOString(), status: "failed",
-      error_summary: [{ reason: error instanceof Error ? error.message : "Unknown error" }],
+      error_summary: [{ reason: (error as { message?: string } | null)?.message ?? "Unknown error" }],
     }).eq("id", run.id);
     throw error;
   }
 }
 
 main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : "Ingestion failed"}\n`);
+  process.stderr.write(`${(error as { message?: string } | null)?.message ?? "Ingestion failed"}\n`);
   process.exitCode = 1;
 });
