@@ -121,7 +121,7 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
   return <div className="page-wrap research-page">
     <div className="research-heading"><p className="eyebrow">PUBLIC RESEARCH / REVIEWED SOURCES</p>
       <h1>Research the record.</h1>
-      <p className="intro">Find published records and verify each result at its official source. Coverage is measured from this pilot collection.</p>
+      <p className="intro">Find published records and verify each result at its official source. Coverage is measured from the reviewed collection.</p>
     </div>
     <div className="research-layout">
       <nav className="research-nav" aria-label="Search collections">
@@ -134,7 +134,7 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
         <section className="research-panel" aria-labelledby="search-heading">
           <div className="research-panel-heading"><div><p className="eyebrow">{initialMode === "statutes" ? "LEGISLATION" : "JUDGMENTS"}</p>
             <h2 id="search-heading">{selected.label} search</h2></div>
-            <span className="scope-pill">{initialMode === "statutes" ? "Reviewed sources only" : "FCCP pilot"}</span></div>
+            <span className="scope-pill">{initialMode === "statutes" ? "Reviewed sources only" : "FCCP only"}</span></div>
           {initialMode === "courtwise" && <p className="field-note">Covered court: Federal Constitutional Court of Pakistan. Other courts have not been indexed.</p>}
           {initialMode === "citation" && <p className="field-note">Reporter citations are returned only when a reviewer has verified the citation field. Use Case Law for case identifiers.</p>}
           {initialMode === "advanced" && <p className="field-note">Decision date filters include only records with a verified decision date. A source upload date is different.</p>}

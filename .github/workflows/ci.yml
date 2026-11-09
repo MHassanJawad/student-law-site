@@ -1,4 +1,4 @@
-# Quality gate for the web app, ingestion worker, and SQL migrations.
+# Quality gate for the web app, ingestion worker, SQL migrations, container image, and secrets.
 name: CI
 on:
   pull_request:
@@ -25,9 +25,36 @@ jobs:
           npx supabase start
           npx supabase db reset --local
           npx supabase db lint --local
-      - name: Build and check search, accounts, latency, and accessibility
+      - name: Build and check search, accounts, latency, accessibility, and security controls
         run: bash scripts/ci-verify-local.sh
       - name: Rehearse corpus backup and restore
         run: bash scripts/ci-restore-drill.sh
       - name: Rehearse account and application-data restore
         run: bash scripts/ci-full-restore-drill.sh
+
+  container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production web image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ci-build-placeholder \
+            --build-arg APP_VERSION="${GITHUB_SHA}" \
+            -t student-law-web:ci .
+      - name: Smoke-test the image without a database
+        run: bash scripts/ci-container-smoke.sh student-law-web:ci
+
+  secrets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan history for committed credentials
+        run: bash scripts/ci-secret-scan.sh

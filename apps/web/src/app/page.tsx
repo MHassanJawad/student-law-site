@@ -2,14 +2,14 @@
 import Link from "next/link";
 import { CoverageSummary } from "./coverage-summary";
 
-/** Renders the first searchable FCCP pilot entry point. */
+/** Renders corpus scope and the research entry points. */
 export default function HomePage() {
   return (
     <div className="page-wrap">
       <section className="hero">
         <p className="eyebrow">PAKISTANI LEGAL RESEARCH</p>
         <h1>Find the source.<br />Follow the law.</h1>
-        <p className="hero-copy">Search reviewed Pakistani legal records, inspect their provenance, and open the official source. The current published pilot covers FCCP judgment metadata.</p>
+        <p className="hero-copy">Search reviewed Pakistani legal records, inspect their provenance, and open the official source. Judgments come only from the Federal Constitutional Court of Pakistan; legislation is added source by source as it is reviewed.</p>
         <CoverageSummary />
         <div className="hero-actions">
           <Link className="button" href="/search?mode=case-law">Explore case law</Link>
@@ -18,15 +18,16 @@ export default function HomePage() {
       </section>
       <section className="feature-grid" aria-label="Research collections">
         <article className="feature-card">
-          <p className="eyebrow">AVAILABLE IN THIS SLICE</p>
+          <p className="eyebrow">FCCP JUDGMENTS</p>
           <h2>Case Law</h2>
           <p>Find reviewed FCCP records by case identifier and inspect their source and checked date.</p>
+          <p className="card-links"><Link href="/search?mode=courtwise">Courtwise</Link><Link href="/search?mode=citation">Citation</Link><Link href="/search?mode=advanced">Advanced</Link></p>
           <Link href="/search?mode=case-law">Open search <span aria-hidden="true">&rarr;</span></Link>
         </article>
         <article className="feature-card muted-card">
-          <p className="eyebrow">EARLY CORPUS</p>
+          <p className="eyebrow">FEDERAL AND PROVINCIAL</p>
           <h2>Legislation</h2>
-          <p>Browse verified metadata from available sources. The local setup includes one labeled Pakistan Code sample; legal status remains unknown.</p>
+          <p>Browse reviewed metadata and follow each law to its official source. Legal status is shown as unknown unless a source confirms it.</p>
           <Link href="/search?mode=statutes">Open statutes search <span aria-hidden="true">&rarr;</span></Link>
         </article>
         <article className="feature-card muted-card">

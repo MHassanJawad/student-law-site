@@ -23,7 +23,8 @@ async function boundedText(response: Response, limit: number): Promise<string> {
   return new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks));
 }
 
-async function checkedGet(url: string, contentType: string, limit: number): Promise<{ text: string; status: number }> {
+/** GET one official URL with no redirects, a timeout, a content-type check, and a byte limit. */
+export async function checkedGet(url: string, contentType: string, limit: number): Promise<{ text: string; status: number }> {
   const response = await fetch(url, {
     headers: { "User-Agent": USER_AGENT, Accept: contentType },
     redirect: "manual", signal: AbortSignal.timeout(15000),

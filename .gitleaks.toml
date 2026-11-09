@@ -1,0 +1,7 @@
+# Secret-scan rules: gitleaks defaults, with disposable test literals excluded.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Literal wrong-password values used by local account-deletion checks"
+regexes = ['''incorrect-password''']

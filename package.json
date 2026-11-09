@@ -15,6 +15,9 @@
     "ingest:fccp": "npm run ingest:fccp -w @student-law/worker --",
     "review:fccp": "npm run review:fccp -w @student-law/worker --",
     "inspect:fccp-pdf": "npm run inspect:fccp-pdf -w @student-law/worker --",
+    "ingest:pakistan-code": "npm run ingest:pakistan-code -w @student-law/worker --",
+    "review:legislation": "npm run review:legislation -w @student-law/worker --",
+    "sync:corpus": "npm run sync:corpus -w @student-law/worker --",
     "test:local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-local.mjs",
     "test:ingestion-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-ingestion-local.mjs",
     "test:phase5-local": "node --env-file=apps/web/.env.local --env-file=apps/worker/.env scripts/check-phase5-local.mjs"

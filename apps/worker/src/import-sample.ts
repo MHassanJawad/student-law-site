@@ -79,4 +79,4 @@ export async function importSample(): Promise<void> {
 }
 
 importSample().then(() => process.stdout.write("FCCP sample import complete.\n"))
-  .catch((error: unknown) => { process.stderr.write(`${error instanceof Error ? error.message : "Import failed"}\n`); process.exitCode = 1; });
+  .catch((error: unknown) => { process.stderr.write(`${(error as { message?: string } | null)?.message ?? "Import failed"}\n`); process.exitCode = 1; });

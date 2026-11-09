@@ -2,12 +2,12 @@
 
 Requires Node.js 22 and npm for the frontend. A local Supabase database normally also requires Docker Desktop. Work from the repository root. These instructions use Windows PowerShell; use `npm` and `npx` in a shell where those commands work. The local Supabase stack is for development and should remain on localhost.
 
-**Current C: storage restriction:** Do not start local Docker Desktop or run Supabase commands on this computer. Its WSL disk image was moved to `D:\DockerData\DockerDesktopWSL`, but Docker Desktop is installed on C: and still keeps Windows configuration there. Moving the disk image alone cannot guarantee zero C: writes. Database, account, and ingestion checks run on GitHub's Linux CI runner instead. The frontend-only `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-on-d.ps1` sets project cache and temporary paths on D: and does not start Docker. Data requests will report unavailable without a database.
+**Protecting C::** `%USERPROFILE%\.wslconfig` must set `memory=4GB` and a `swapFile` on D:. Starting Docker can still grow the Windows page file on C: by about 3.5 GB, so keep at least 4 GB free there before starting it, and quit Docker when finished.
 
-## Full local setup after the C: storage restriction is resolved
+## Full local setup
 
 1. Start Docker Desktop. Run `npm.cmd ci --legacy-peer-deps`.
-2. Run `npx.cmd supabase start`. If this is a fresh local database, run `npx.cmd supabase db reset --local` to apply migrations and load two labeled metadata samples. **Reset deletes existing local database data.**
+2. Run `npx.cmd supabase start -x studio,imgproxy,mailpit,inbucket,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta`, which skips services this app does not use. If this is a fresh local database, run `npx.cmd supabase db reset --local` to apply migrations and load two labeled metadata samples. **Reset deletes existing local database data.**
 3. Run `npx.cmd supabase status` to read the local API URL and anon/publishable key. Copy `.env.example` to `apps/web/.env.local` and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The web app never needs the service-role key.
 4. Run `npm.cmd run dev` and open `http://localhost:3000`.
 

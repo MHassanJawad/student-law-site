@@ -1,0 +1,17 @@
+# Keep secrets, local state, and build output out of the image context.
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+.git
+.github
+.tmp
+.npm-cache
+coverage
+docs
+scripts
+supabase
+*.pdf
+*.md
