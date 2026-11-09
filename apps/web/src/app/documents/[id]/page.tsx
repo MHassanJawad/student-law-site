@@ -14,7 +14,7 @@ type Document = {
   source: { code: string; name: string; attribution: string | null; jurisdiction: string };
   metadata: { authorJudge?: string; caseNumber?: string; bench?: string; jurisdiction?: string;
     instrumentType?: string; enactmentYear?: number; legalStatus?: string;
-    sourceFields?: { source_upload_date?: string } };
+    sourceFields?: { source_upload_date?: string; promulgation_date?: string; category?: string; source_review_flag?: string; source_note?: string } };
   sections: Section[];
 };
 
@@ -80,11 +80,14 @@ export default function DocumentPage() {
               <div><dt>Jurisdiction</dt><dd>{document.metadata.jurisdiction ?? "Not recorded"}</dd></div>
               <div><dt>Instrument type</dt><dd>{document.metadata.instrumentType ?? "Not recorded"}</dd></div>
               <div><dt>Enactment year</dt><dd>{document.metadata.enactmentYear ?? "Not recorded"}</dd></div>
+              <div><dt>Promulgation date</dt><dd>{formatDate(document.metadata.sourceFields?.promulgation_date)}</dd></div>
+              <div><dt>Source category</dt><dd>{document.metadata.sourceFields?.category ?? "Not recorded"}</dd></div>
+              <div><dt>Source review flag</dt><dd>{document.metadata.sourceFields?.source_review_flag ?? "Not recorded"}</dd></div>
               <div><dt>Legal status</dt><dd>{document.metadata.legalStatus?.replaceAll("_", " ") ?? "Unknown"}</dd></div>
             </>}
           </dl>
           <div className="document-actions" id="source">
-            <a className="button" href={document.sourceUrl} target="_blank" rel="noopener noreferrer">Open official source ?</a>
+            <a className="button" href={document.sourceUrl} target="_blank" rel="noopener noreferrer">Open official source <span aria-hidden="true">&rarr;</span></a>
             <button className="button button-secondary" type="button" onClick={saveCitation}>Save citation</button>
           </div>
           <p className="status-line" aria-live="polite">{saveStatus}</p>
@@ -107,6 +110,7 @@ export default function DocumentPage() {
           <p><strong>Checked</strong><br />{formatDate(document.checkedAt)}</p>
           <p><strong>Version reference</strong><br /><code>{document.versionId.slice(0, 8)}</code></p>
           {document.source?.code?.endsWith("_SAMPLE") && <p>This metadata sample is for local testing. Source text and current legal status have not been verified for publication.</p>}
+          {document.metadata.sourceFields?.source_note && <p>{document.metadata.sourceFields.source_note}.</p>}
           <p>Verify legal status and wording at the official source.</p>
         </aside>
       </div>

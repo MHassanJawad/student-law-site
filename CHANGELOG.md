@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Law pages now show the promulgation date, source category, and the portal's review flag and note.
+- The header shows when you are signed in, and Home links to every search mode and shows when sources were last checked.
+- Replaced local-demo wording on public pages and fixed the broken official-source button label.
 - Added a bounded Pakistan Code importer for federal laws. It stages one letter page at a time privately, holds listing metadata only, publishes nothing until reviewed, and always shows legal status as unknown.
 - Added `npm run sync:corpus`, an upsert-only copy of reviewed records and status changes from the review database to a hosted database.
 - Fixed worker-only publication functions being callable with the public key under Supabase's default privileges.

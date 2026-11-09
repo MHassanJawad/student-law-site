@@ -29,7 +29,9 @@ The owner's ceiling is below PKR 10,000 per month. Prices change; check each pro
 
 ## First deployment (staging)
 
-1. **Create the Supabase project.** Choose a region close to Pakistan. Note the project ref, API URL, publishable key, and database connection string. Keep the service-role key in a password manager; the web app does not need it.
+1. **Create the Supabase project.** Choose the South Asia (Mumbai) region if offered. Save the database password in a password manager. Then fill in the two local files, both ignored by git:
+   - `apps/web/.env.production.local`: the project URL and publishable key. Used only by `npm run build` and `npm run start`.
+   - `apps/worker/.env`: `TARGET_SUPABASE_URL` and `TARGET_SUPABASE_SERVICE_ROLE_KEY`, used only by the corpus sync. The web app never needs the service-role key.
 2. **Apply migrations** from a clean checkout of `main`:
    ```bash
    npx supabase login
@@ -42,12 +44,13 @@ The owner's ceiling is below PKR 10,000 per month. Prices change; check each pro
    - Turn email confirmation **on**.
    - Configure custom SMTP and send a test recovery email.
    - Review Auth rate limits for sign-in, sign-up, and recovery emails.
-4. **Load the reviewed corpus** with the corpus sync. From the operator machine with local Supabase running, add the hosted `TARGET_SUPABASE_URL` and `TARGET_SUPABASE_SERVICE_ROLE_KEY` to `apps/worker/.env`, then run:
+4. **Load the reviewed corpus** with the corpus sync. From the operator machine with local Supabase running, run:
    ```bash
    npm run sync:corpus            # dry run: prints how many rows each table would receive
    npm run sync:corpus -- --apply
    ```
    The sync copies only sources and documents that are published, withdrawn, or quarantined, along with their versions, metadata, and sections. Staged records, review queues, accounts, and editorial content stay local. It only upserts, so rerunning it is safe. Decide first whether the labeled local seed records belong in the hosted corpus: the Phase 2 FCCP fixture and the `LOCAL SAMPLE` Contract Act. If not, withdraw them locally before the first sync.
+   To try the hosted database before deploying, run `npm run build`, then `npm run start`, and open `http://localhost:3000`. Add `http://localhost:3000` to the Auth redirect URLs for this test.
 5. **Build the image** with the hosted public settings:
    ```bash
    docker build \

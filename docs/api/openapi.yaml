@@ -52,36 +52,6 @@ paths:
         '200': {description: FCCP results with coverage, content: {application/json: {schema: {$ref: '#/components/schemas/SearchPage'}}}}
         '400': {$ref: '#/components/responses/BadRequest'}
         '429': {$ref: '#/components/responses/RateLimited'}
-  /search/legislation:
-    get:
-      tags: [Search]
-      summary: Search covered federal and provincial laws
-      parameters:
-        - $ref: '#/components/parameters/Query'
-        - {name: jurisdiction, in: query, schema: {type: string}}
-        - {name: type, in: query, schema: {type: string}}
-        - {name: year, in: query, schema: {type: integer, minimum: 1800}}
-        - {name: status, in: query, schema: {type: string}}
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-      responses:
-        '200': {description: Law results with coverage, content: {application/json: {schema: {$ref: '#/components/schemas/SearchPage'}}}}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-  /search/citations:
-    get:
-      tags: [Search]
-      summary: Resolve exact or partial FCCP citation by text or reporter/year/page fields
-      parameters:
-        - {name: q, in: query, schema: {type: string, minLength: 2, maxLength: 200}}
-        - {name: reporter, in: query, schema: {type: string, maxLength: 30}}
-        - {name: year, in: query, schema: {type: integer, minimum: 1800}}
-        - {name: page, in: query, schema: {type: string, maxLength: 30}}
-        - $ref: '#/components/parameters/Page'
-      responses:
-        '200': {description: Candidate matches; ambiguous true when more than one plausible document, content: {application/json: {schema: {$ref: '#/components/schemas/CitationResults'}}}}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '429': {$ref: '#/components/responses/RateLimited'}
   /documents/{id}:
     get:
       tags: [Documents]
@@ -89,14 +59,6 @@ paths:
       parameters: [{$ref: '#/components/parameters/Id'}]
       responses:
         '200': {description: Document detail, content: {application/json: {schema: {$ref: '#/components/schemas/Document'}}}}
-        '404': {$ref: '#/components/responses/NotFound'}
-  /documents/{id}/sections:
-    get:
-      tags: [Documents]
-      summary: Validated sections of a published version
-      parameters: [{$ref: '#/components/parameters/Id'}]
-      responses:
-        '200': {description: Ordered sections, content: {application/json: {schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '#/components/schemas/Section'}}}}}}}
         '404': {$ref: '#/components/responses/NotFound'}
   /editorial/{kind}:
     get:
