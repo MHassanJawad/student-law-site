@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "npm run dev -w @student-law/web",
     "build": "npm run build -w @student-law/web",
+    "start": "npm run start -w @student-law/web",
     "lint": "npm run lint -w @student-law/web && npm run lint -w @student-law/worker",
     "typecheck": "npm run typecheck -w @student-law/web && npm run typecheck -w @student-law/worker",
     "test": "npm run test -w @student-law/web && npm run test -w @student-law/worker",
