@@ -57,12 +57,6 @@ async function stage(client: SupabaseClient, source: string, item: FccpCandidate
   const { error } = await client.from("ingestion_candidates")
     .update({ download_url: item.downloadUrl, last_seen_at: now }).eq("id", previous.id);
   if (error) throw error;
-  if (previous.review_status === "approved") {
-    const { error: linkError } = await client.from("legal_documents")
-      .update({ canonical_url: item.downloadUrl, updated_at: now })
-      .eq("source_id", source).eq("source_item_id", item.identityHash).eq("publication_status", "published");
-    if (linkError) throw linkError;
-  }
   return "unchanged";
 }
 
