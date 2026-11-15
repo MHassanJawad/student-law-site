@@ -2,7 +2,7 @@
 
 export const SUMMARY_PROMPT_VERSION = "summary-v1";
 export const DEFAULT_SUMMARY_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-export const DEFAULT_SUMMARY_MODEL = "llama-3.3-70b-versatile";
+export const DEFAULT_SUMMARY_MODEL = "openai/gpt-oss-120b";
 /** About 6,000 tokens, which fits free-tier per-minute token limits. */
 export const DEFAULT_MAX_INPUT_CHARS = 24_000;
 

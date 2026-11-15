@@ -28,7 +28,9 @@ async function complete(text: string): Promise<string> {
     const response = await fetch(apiUrl, {
       method: "POST", signal: AbortSignal.timeout(90000),
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, temperature: 0.2, max_tokens: 300, messages: [
+      // Reasoning models spend part of max_tokens thinking, so leave room beyond the ~200-token answer.
+      body: JSON.stringify({ model, temperature: 0.2, max_tokens: 1500,
+        ...(model.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}), messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `<judgment>\n${text}\n</judgment>` },
       ] }),
@@ -40,8 +42,10 @@ async function complete(text: string): Promise<string> {
       await sleep(wait * 1000);
       continue;
     }
-    // Only the status goes to logs: an error body could echo the request.
-    if (!response.ok) throw new Error(`Summary API returned HTTP ${response.status}.`);
+    if (!response.ok) {
+      const detail = await response.json().then((body: { error?: { message?: unknown } }) => body.error?.message, () => undefined);
+      throw new Error(`Summary API returned HTTP ${response.status}${typeof detail === "string" ? `: ${detail.slice(0, 200)}` : "."}`);
+    }
     const body = await response.json() as { choices?: { message?: { content?: string } }[] };
     const content = body.choices?.[0]?.message?.content;
     if (typeof content !== "string") throw new Error("Summary API returned no text.");
