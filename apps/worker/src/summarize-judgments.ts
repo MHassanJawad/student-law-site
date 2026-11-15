@@ -11,7 +11,7 @@ const apiKey = process.env.SUMMARY_API_KEY?.trim();
 const apiUrl = process.env.SUMMARY_API_URL?.trim() || DEFAULT_SUMMARY_API_URL;
 const model = process.env.SUMMARY_MODEL?.trim() || DEFAULT_SUMMARY_MODEL;
 const maxInput = Number(process.env.SUMMARY_MAX_INPUT_CHARS?.trim() || DEFAULT_MAX_INPUT_CHARS);
-const pauseMs = Number(process.env.SUMMARY_PAUSE_MS?.trim() || 15000);
+const pauseMs = Number(process.env.SUMMARY_PAUSE_MS?.trim() || 2000);
 if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new Error("Use --limit 1-200.");
 if (!url || !key || !["localhost", "127.0.0.1"].includes(new URL(url).hostname)) {
   throw new Error("Summaries require local worker credentials.");
@@ -23,18 +23,46 @@ const client = createClient(url, key, { auth: { persistSession: false } });
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** One OpenAI-compatible chat completion, waiting out rate limits up to three times. */
+const MAX_OUTPUT_TOKENS = 800;
+let tokenBudget: { remaining: number; resetsAt: number } | null = null;
+
+/** Parse a "1m2.5s" / "16.7s" / "250ms" duration from rate-limit headers into milliseconds. */
+function durationMs(value: string | null): number {
+  let total = 0;
+  for (const [, amount, unit] of (value ?? "").matchAll(/([\d.]+)(ms|m|s)/g)) {
+    total += Number(amount) * (unit === "ms" ? 1 : unit === "s" ? 1000 : 60000);
+  }
+  return total;
+}
+
+/** Wait until the per-minute token allowance can cover this request, instead of sending it and being refused. */
+async function awaitTokenBudget(text: string): Promise<void> {
+  const need = Math.ceil(text.length / 3.5) + MAX_OUTPUT_TOKENS;
+  if (tokenBudget && tokenBudget.remaining < need && tokenBudget.resetsAt > Date.now()) {
+    const wait = tokenBudget.resetsAt - Date.now() + 500;
+    process.stdout.write(`Waiting ${Math.ceil(wait / 1000)}s for the token allowance.
+`);
+    await sleep(wait);
+  }
+}
+
 async function complete(text: string): Promise<string> {
   for (let attempt = 1; ; attempt += 1) {
+    await awaitTokenBudget(text);
     const response = await fetch(apiUrl, {
       method: "POST", signal: AbortSignal.timeout(90000),
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       // Reasoning models spend part of max_tokens thinking, so leave room beyond the ~200-token answer.
-      body: JSON.stringify({ model, temperature: 0.2, max_tokens: 1500,
+      body: JSON.stringify({ model, temperature: 0.2, max_tokens: MAX_OUTPUT_TOKENS,
         ...(model.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}), messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `<judgment>\n${text}\n</judgment>` },
       ] }),
     });
+    const remaining = Number(response.headers.get("x-ratelimit-remaining-tokens"));
+    if (response.headers.has("x-ratelimit-remaining-tokens") && Number.isFinite(remaining)) {
+      tokenBudget = { remaining, resetsAt: Date.now() + durationMs(response.headers.get("x-ratelimit-reset-tokens")) };
+    }
     if (response.status === 429 && attempt <= 3) {
       const wait = Math.min(Number(response.headers.get("retry-after")) || 30, 120);
       process.stdout.write(`Rate limited; waiting ${wait}s.\n`);

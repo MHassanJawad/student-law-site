@@ -27,7 +27,7 @@ All commands run on the operator machine against local Supabase. They refuse a r
    - **Extractable text:** published at once on the judgment's current version (`text_kind = extracted`).
    - **Scanned or sparse PDFs:** not published, because they need OCR. The command reports them and skips them on later runs.
 4. **Draft summaries.** `npm run summarize:judgments -- --limit 10` sends each judgment's text to the configured model and stores a short draft privately in `summary_drafts`. It needs `SUMMARY_API_KEY` (see [environment variables](../ENVIRONMENT_VARIABLES.md)).
-   - **Long judgments:** text over `SUMMARY_MAX_INPUT_CHARS` (default 24,000) is trimmed to its start and end, where the parties and the decision usually are.
+   - **Long judgments:** text over `SUMMARY_MAX_INPUT_CHARS` (default 12,000) is trimmed to its start and end, where the parties and the decision usually are.
    - **Model declines:** if the model says the text is insufficient, no draft is stored.
 5. **Review summaries.**
    - `npm run review:summaries -- list` shows pending drafts.

@@ -3,8 +3,8 @@
 export const SUMMARY_PROMPT_VERSION = "summary-v2";
 export const DEFAULT_SUMMARY_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 export const DEFAULT_SUMMARY_MODEL = "openai/gpt-oss-120b";
-/** About 6,000 tokens, which fits free-tier per-minute token limits. */
-export const DEFAULT_MAX_INPUT_CHARS = 24_000;
+/** About 3,000 tokens: Groq's free tier allows 8,000 tokens per minute, so this fits two requests a minute. */
+export const DEFAULT_MAX_INPUT_CHARS = 12_000;
 
 export const SYSTEM_PROMPT = `You write the short blurb shown under a Pakistani court judgment in a legal research site.
 A law student reads it to decide whether the judgment is worth opening, so say what the judgment is ABOUT and what it decides.
