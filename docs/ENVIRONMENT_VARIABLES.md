@@ -13,5 +13,10 @@
 | `SUPABASE_SERVICE_ROLE_KEY` | Worker only | Yes, worker | Privileged import key. Secret; never add `NEXT_PUBLIC_`, commit it, or send it to the browser. |
 | `TARGET_SUPABASE_URL` | Corpus sync only | For `sync:corpus` | Hosted Supabase API URL that receives reviewed corpus records. Must be HTTPS. |
 | `TARGET_SUPABASE_SERVICE_ROLE_KEY` | Corpus sync only | For `sync:corpus` | Hosted service-role key. Secret; keep it only in `apps/worker/.env` on the operator machine. |
+| `SUMMARY_API_KEY` | Summary drafting only | For `summarize:judgments` | API key for the summary model. Secret; keep it only in `apps/worker/.env`. A free Groq key works with the defaults. |
+| `SUMMARY_API_URL` | Summary drafting only | No | OpenAI-compatible chat completions URL. Default `https://api.groq.com/openai/v1/chat/completions`. Must be HTTPS. |
+| `SUMMARY_MODEL` | Summary drafting only | No | Model name sent to that API. Default `llama-3.3-70b-versatile`. It is shown on the site next to each summary. |
+| `SUMMARY_MAX_INPUT_CHARS` | Summary drafting only | No | Judgment characters sent per request (default `24000`, about 6,000 tokens). Lower it if the provider rejects requests as too large. |
+| `SUMMARY_PAUSE_MS` | Summary drafting only | No | Pause between requests (default `15000`), to stay under free-tier per-minute limits. |
 
 The root `.env.example` contains only public web settings; copy it to `.env.local`. The worker's separate `apps/worker/.env.example` includes its privileged key; copy it to `apps/worker/.env`. `.gitignore` excludes both local files. Hosted public values go in `apps/web/.env.production.local`, which `next build` and `next start` read in preference to `.env.local`; `next dev` ignores it. The sample importer refuses a remote URL. Production secrets require a hosting secrets manager and a distinct worker deployment. The web app holds no secret: its only keys are public and rely on RLS.

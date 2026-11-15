@@ -11,7 +11,7 @@ type DatabaseHit = {
   issuing_court: string | null; case_number: string | null; decision_date: string | null;
   author_judge: string | null; raw_citation: string | null; jurisdiction: string | null;
   instrument_type: string | null; enactment_year: number | null; legal_status: string | null;
-  official_citation: string | null; excerpt: string | null;
+  official_citation: string | null; excerpt: string | null; summary: string | null;
 };
 
 /** Return search hits, an exact count, and measured published coverage. */
@@ -45,7 +45,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       versionId: row.version_id, court: row.issuing_court, caseNumber: row.case_number,
       date: row.decision_date, authorJudge: row.author_judge, citation: row.raw_citation ?? row.official_citation,
       jurisdiction: row.jurisdiction, instrumentType: row.instrument_type,
-      enactmentYear: row.enactment_year, legalStatus: row.legal_status, excerpt: row.excerpt,
+      enactmentYear: row.enactment_year, legalStatus: row.legal_status, excerpt: row.excerpt, summary: row.summary,
     })),
     total: Number(payload?.total ?? 0), page: query.page, limit: 20,
     coverage: mapCoverage(coverage.data),

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Rebuilt the FCCP importer for the court's new site and JSON API, keeping every existing record's identity. Orders are no longer in the court's judgment feed.
+- Judgment pages now show the full text extracted from the official PDF.
+- Added short AI-generated judgment summaries, drafted by a configurable model (Groq by default), reviewed privately, then shown on judgment pages and under search results with an AI label.
 - Law pages now show the promulgation date, source category, and the portal's review flag and note.
 - The header shows when you are signed in, and Home links to every search mode and shows when sources were last checked.
 - Replaced local-demo wording on public pages and fixed the broken official-source button label.

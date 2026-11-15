@@ -214,6 +214,7 @@ components:
         citation: {type: string, nullable: true}
         date: {type: string, format: date, nullable: true}
         excerpt: {type: string, nullable: true}
+        summary: {type: string, nullable: true, description: Reviewed AI-generated summary; label it as AI-generated when shown}
         sourceUrl: {type: string, format: uri}
         checkedAt: {type: string, format: date-time, nullable: true}
         sourceCode: {type: string}
@@ -239,6 +240,8 @@ components:
             versionId: {type: string, format: uuid}
             text: {type: string, nullable: true}
             textKind: {type: string, enum: [source, extracted, ocr, none]}
+            summaryModel: {type: string, nullable: true, description: Model that wrote the summary}
+            summaryReviewedAt: {type: string, format: date-time, nullable: true}
             versionLabel: {type: string, nullable: true}
             sourceStatus: {type: string, nullable: true}
             metadata: {type: object, additionalProperties: true}

@@ -19,7 +19,7 @@ The health endpoint is not rate limited and returns `503` with a reason during m
 
 - **Weekly:** check uptime history and review Dependabot pull requests.
 - **Monthly, a few letters at a time:** run `npm run ingest:pakistan-code -- --letter <A-Z>` and review new or changed federal laws using the [Pakistan Code runbook](operations/pakistan-code-ingestion.md), then run the corpus sync.
-- **Every two weeks:** run a bounded FCCP listing check (`npm run ingest:fccp -- --all`), then review new or quarantined candidates using the [FCCP runbook](operations/fccp-ingestion.md). Then run `npm run sync:corpus` to see the planned upserts, and `npm run sync:corpus -- --apply` to publish the changes to the hosted database. The sync never deletes rows. Never truncate corpus tables on a hosted database: saved citations reference `legal_documents`, so a cascade would delete users' data.
+- **Every two weeks:** run a bounded FCCP listing check (`npm run ingest:fccp -- --all`), then review new or quarantined candidates using the [FCCP runbook](operations/fccp-ingestion.md). Extract text for newly approved judgments (`npm run extract:fccp-text`), draft summaries (`npm run summarize:judgments`), and review them (`npm run review:summaries -- list`). Then run `npm run sync:corpus` to see the planned upserts, and `npm run sync:corpus -- --apply` to publish the changes to the hosted database. The sync never deletes rows. Never truncate corpus tables on a hosted database: saved citations reference `legal_documents`, so a cascade would delete users' data.
 - **Monthly:**
   - Run a quality review: sample five published records against their official sources (TC-019) and record mismatches.
   - Run `npm audit`.

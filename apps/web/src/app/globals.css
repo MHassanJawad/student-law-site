@@ -109,6 +109,7 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .research-hit h3 a:hover{text-decoration:underline;text-decoration-color:var(--accent)}
 .research-hit>p{font-size:.91rem;color:var(--muted);margin:0 0 14px}
 .research-hit .hit-excerpt{color:var(--text);background:#f1f4ef;border-left:2px solid #9bb6aa;padding:10px 14px;margin:4px 0 16px}
+.ai-label{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-right:6px}
 .hit-label,.hit-footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px 24px;font-size:.75rem;color:var(--muted)}
 .hit-label{font-weight:800;letter-spacing:.08em;color:var(--accent)}
 .hit-footer{font-size:.82rem}

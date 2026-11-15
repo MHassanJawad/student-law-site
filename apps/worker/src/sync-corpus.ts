@@ -29,7 +29,8 @@ async function readFor(db: SupabaseClient, table: Table, column: string, ids: un
 }
 
 async function upsert(db: SupabaseClient, table: Table, rows: Row[]): Promise<void> {
-  for (const batch of chunk(rows, 500)) {
+  // Versions carry full judgment text, so keep those request bodies small.
+  for (const batch of chunk(rows, table === "document_versions" ? 20 : 500)) {
     const { error } = await db.from(table).upsert(batch, { onConflict: CORPUS_TABLES[table].key });
     if (error) throw new Error(`Writing ${table}: ${error.message}`);
   }

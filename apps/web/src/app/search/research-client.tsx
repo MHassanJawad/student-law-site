@@ -10,7 +10,7 @@ type Hit = {
   sourceName: string; sourceCode: string; checkedAt: string; versionId: string;
   court: string | null; caseNumber: string | null; date: string | null;
   authorJudge: string | null; citation: string | null; jurisdiction: string | null;
-  instrumentType: string | null; enactmentYear: number | null; legalStatus: string | null; excerpt: string | null;
+  instrumentType: string | null; enactmentYear: number | null; legalStatus: string | null; excerpt: string | null; summary: string | null;
 };
 type Coverage = { sourceCode: string; kind: string; count: number };
 type SearchResponse = { items: Hit[]; total: number; page: number; limit: number; coverage: Coverage[]; error?: { message: string } };
@@ -180,7 +180,8 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
             <p>{hit.kind === "judgment"
               ? `${hit.citation ? `Reporter citation: ${hit.citation}` : `Case identifier: ${hit.caseNumber ?? "Not recorded"}`}${hit.authorJudge ? ` · ${hit.authorJudge}` : ""}${hit.date ? ` · Decided ${displayDate(hit.date)}` : ""}`
               : `${hit.citation ? `Official citation: ${hit.citation}` : hit.instrumentType ?? "Instrument type unknown"}${hit.enactmentYear ? ` · ${hit.enactmentYear}` : ""} · Status: ${hit.legalStatus?.replaceAll("_", " ") ?? "unknown"}`}</p>
-            {hit.excerpt && <p className="hit-excerpt">{hit.excerpt}</p>}
+            {hit.summary ? <p className="hit-excerpt"><span className="ai-label">AI summary</span> {hit.summary}</p>
+              : hit.excerpt && <p className="hit-excerpt">{hit.excerpt}</p>}
             <div className="hit-footer"><span>Source checked {displayDate(hit.checkedAt)}</span><a href={hit.sourceUrl} target="_blank" rel="noopener noreferrer">Official source ↗</a></div>
           </article>)}
           {result && result.items.length === 0 && <div className="empty-state"><strong>No record in this collection.</strong><p>{initialMode === "statutes" && covered === 0

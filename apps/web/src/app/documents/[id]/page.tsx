@@ -11,6 +11,7 @@ type Document = {
   id: string; kind: "judgment" | "legislation"; title: string; citation: string | null;
   date: string | null; sourceUrl: string; checkedAt: string; versionId: string;
   text: string | null; textKind: "source" | "extracted" | "ocr" | "none";
+  summary: string | null; summaryModel: string | null; summaryReviewedAt: string | null;
   source: { code: string; name: string; attribution: string | null; jurisdiction: string };
   metadata: { authorJudge?: string; caseNumber?: string; bench?: string; jurisdiction?: string;
     instrumentType?: string; enactmentYear?: number; legalStatus?: string;
@@ -91,8 +92,14 @@ export default function DocumentPage() {
             <button className="button button-secondary" type="button" onClick={saveCitation}>Save citation</button>
           </div>
           <p className="status-line" aria-live="polite">{saveStatus}</p>
+          {document.summary && <section className="text-panel document-section" id="summary">
+            <p className="eyebrow">AI-GENERATED SUMMARY</p><h2>Summary</h2>
+            <p>{document.summary}</p>
+            <p className="meta">Written by an AI model ({document.summaryModel}) from the judgment text and checked by an editor on {formatDate(document.summaryReviewedAt)}. It can miss detail or nuance; rely on the full text below.</p>
+          </section>}
           <section className="text-panel document-section" id="document-text">
             <p className="eyebrow">CURRENT REVIEWED VERSION</p><h2>Document text</h2>
+            {document.textKind === "extracted" && <p className="meta">Text taken from the official PDF. Page layout and some formatting are lost; use the official source as the authoritative copy.</p>}
             {document.sections.length > 0 ? <p>Navigate the reviewed sections using the contents list.</p>
               : document.text ? <p className="document-text">{document.text}</p>
                 : <p>This record currently contains reviewed metadata. Open the official source to read the document while its text is being prepared.</p>}
@@ -103,6 +110,7 @@ export default function DocumentPage() {
         </div>
         <aside className="document-aside" aria-label="Document contents and provenance">
           <strong>On this page</strong><a href="#overview">Overview</a><a href="#source">Official source</a>
+          {document.summary && <a href="#summary">Summary</a>}
           <a href="#document-text">Document text</a>
           {document.sections.map((section) => <a key={section.key} href={`#section-${section.key}`}>{section.heading}</a>)}
           <hr />

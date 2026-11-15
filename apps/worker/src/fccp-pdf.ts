@@ -1,11 +1,12 @@
-// Fetch and inspect one official PDF without exposing source text to the web app.
+// Fetch one official FCCP PDF and extract its text.
 import { createHash } from "node:crypto";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { FCCP_ORIGIN } from "./fccp-listing.js";
 
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 const MAX_PDF_PAGES = 100;
 const MAX_TEXT_CHARS = 2_000_000;
-export const PDF_PARSER_VERSION = "pdfjs-6.4.299-v1";
+export const PDF_PARSER_VERSION = "pdfjs-6.4.299-v2";
 
 export type PdfInspection = {
   pdfSha256: string;
@@ -16,15 +17,15 @@ export type PdfInspection = {
   quality: "extractable" | "low_text" | "scanned_or_empty";
 };
 
-/** Download one selected official PDF with fixed-host, time, size, and type bounds. */
+/** Download one official PDF by its content-addressed link, with time, size, type, and hash bounds. */
 export async function fetchFccpPdf(sourceUrl: string): Promise<Uint8Array> {
   const url = new URL(sourceUrl);
-  if (url.origin !== "https://www.fccp.gov.pk" || url.username || url.password
-    || !url.pathname.startsWith("/download/") || url.pathname === "/download/") {
-    throw new Error("PDF URL is not an official FCCP download link.");
+  const expectedHash = /^\/api\/public\/site\/files\/([\da-f]{64})$/.exec(url.pathname)?.[1];
+  if (url.origin !== FCCP_ORIGIN || url.username || url.password || url.search || !expectedHash) {
+    throw new Error("PDF URL is not an official FCCP file link.");
   }
   const response = await fetch(url, {
-    headers: { Accept: "application/pdf", "User-Agent": "StudentLawSitePilot/0.1 (one reviewed PDF inspection)" },
+    headers: { Accept: "application/pdf", "User-Agent": "StudentLawSite/0.2 (judgment text extraction; contact: repository maintainer)" },
     redirect: "manual", signal: AbortSignal.timeout(30000),
   });
   if (response.status !== 200 || !response.headers.get("content-type")?.toLowerCase().includes("application/pdf")) {
@@ -49,10 +50,11 @@ export async function fetchFccpPdf(sourceUrl: string): Promise<Uint8Array> {
   }
   const bytes = Buffer.concat(chunks);
   if (bytes.subarray(0, 5).toString("ascii") !== "%PDF-") throw new Error("Download is not a PDF file.");
+  if (createHash("sha256").update(bytes).digest("hex") !== expectedHash) throw new Error("PDF bytes do not match the official file hash.");
   return new Uint8Array(bytes);
 }
 
-/** Extract private text and report quality; scanned pages remain unfit for summaries. */
+/** Extract text and report quality; scanned pages need OCR and are not published. */
 export async function inspectFccpPdf(bytes: Uint8Array): Promise<PdfInspection> {
   if (bytes.length === 0 || bytes.length > MAX_PDF_BYTES || Buffer.from(bytes.subarray(0, 5)).toString("ascii") !== "%PDF-") {
     throw new Error("PDF bytes fail size or signature validation.");
@@ -67,8 +69,9 @@ export async function inspectFccpPdf(bytes: Uint8Array): Promise<PdfInspection> 
     for (let page = 1; page <= document.numPages; page += 1) {
       const pdfPage = await document.getPage(page);
       const content = await pdfPage.getTextContent();
-      const text = content.items.flatMap((item) => "str" in item ? [item.str] : [])
-        .join(" ").replace(/\s+/g, " ").trim();
+      // Keep the PDF's line breaks so the published text stays readable.
+      const text = content.items.map((item) => "str" in item ? item.str + (item.hasEOL ? "\n" : " ") : "")
+        .join("").replace(/[^\S\n]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
       length += text.length;
       if (length > MAX_TEXT_CHARS) throw new Error("Extracted PDF text exceeds the private storage cap.");
       pages.push(text);
