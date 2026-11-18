@@ -67,6 +67,9 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .saved-row{display:flex;justify-content:space-between;align-items:center;gap:20px}
 .site-footer{border-top:1px solid var(--border);padding:24px;max-width:1160px;margin:auto;color:var(--muted);font-size:.88rem}
 .site-footer p{margin:0}
+.card-links{display:flex;flex-wrap:wrap;gap:8px 20px}
+.footer-nav{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:12px}
+.footer-nav a{display:inline-block;min-height:24px;color:var(--text);font-weight:700}
 @media(max-width:760px){.feature-grid{grid-template-columns:1fr}.feature-card{min-height:unset}.page-wrap{padding-top:32px}.hero{padding:28px 0 44px}.search-row{flex-direction:column}.document-meta{grid-template-columns:1fr}.header-inner{padding:16px}.main-nav{gap:8px 16px}.saved-row{align-items:flex-start}}
 
 /* Phase 4 research workspace: restrained editorial structure for dense records. */
@@ -106,6 +109,7 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .research-hit h3 a:hover{text-decoration:underline;text-decoration-color:var(--accent)}
 .research-hit>p{font-size:.91rem;color:var(--muted);margin:0 0 14px}
 .research-hit .hit-excerpt{color:var(--text);background:#f1f4ef;border-left:2px solid #9bb6aa;padding:10px 14px;margin:4px 0 16px}
+.ai-label{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-right:6px}
 .hit-label,.hit-footer{display:flex;align-items:center;flex-wrap:wrap;gap:10px 24px;font-size:.75rem;color:var(--muted)}
 .hit-label{font-weight:800;letter-spacing:.08em;color:var(--accent)}
 .hit-footer{font-size:.82rem}

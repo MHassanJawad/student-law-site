@@ -1,4 +1,4 @@
-// Email account entry point for Supabase Auth in the pilot.
+// Email account entry point for Supabase Auth.
 "use client";
 
 import { useState, type FormEvent } from "react";

@@ -32,7 +32,9 @@ Phase 1 design, 2026-09-27. Tests are implemented alongside code in later phases
 | SEC-003 | CSRF | Forged state-changing browser request | Rejected by session/origin/CSRF controls as applicable | Security |
 | SEC-004 | Auth bypass | No/invalid bearer session on `/me` | 401, no saved data | Security |
 | SEC-005 | IDOR | Other owner's saved ID | 404/denied at route and RLS | Security |
-| SEC-006 | Rate limit | Repeated search/auth attempts | 429 or provider lockout at configured threshold | Security |
+| SEC-006 | Rate limit | Repeated search/auth attempts | 429 with Retry-After from the app (CI: `ci-security-checks.mjs`), or provider lockout for Supabase Auth sign-in | Security |
+| SEC-009 | Security headers | Any page from the production build or container | CSP, HSTS, nosniff, frame denial present; no CSP violation in the browser check | Security |
+| OPS-001 | Health | Database reachable / unreachable / maintenance | 200 `ok` / 503 `failed` / 503 `maintenance`; never rate limited | API/CI |
 | SEC-007 | Sensitive logs | Import/auth errors | No tokens, passwords, raw sensitive account data | Security |
 | SEC-008 | Traversal | File path or URL escape in manual import | Rejected; no local/private file read | Security |
 

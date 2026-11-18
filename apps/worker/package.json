@@ -6,7 +6,12 @@
     "import:sample": "node --env-file=.env --import tsx src/import-sample.ts",
     "ingest:fccp": "node --env-file=.env --import tsx src/ingest-fccp.ts",
     "review:fccp": "node --env-file=.env --import tsx src/review-fccp.ts",
-    "inspect:fccp-pdf": "node --env-file=.env --import tsx src/inspect-fccp-pdf.ts",
+    "extract:fccp-text": "node --env-file=.env --import tsx src/extract-fccp-text.ts",
+    "summarize:judgments": "node --env-file=.env --import tsx src/summarize-judgments.ts",
+    "review:summaries": "node --env-file=.env --import tsx src/review-summaries.ts",
+    "ingest:pakistan-code": "node --use-system-ca --env-file=.env --import tsx src/ingest-pakistan-code.ts",
+    "review:legislation": "node --use-system-ca --env-file=.env --import tsx src/review-legislation.ts",
+    "sync:corpus": "node --env-file=.env --import tsx src/sync-corpus.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

@@ -1,9 +1,11 @@
-// Parse the public FCCP listing into unreviewed metadata candidates.
+// Parse the public FCCP publications API into unreviewed judgment candidates.
 import { createHash } from "node:crypto";
-import { load } from "cheerio";
+import { z } from "zod";
 
-export const FCCP_LISTING_URL = "https://www.fccp.gov.pk/judgements";
-export const FCCP_PARSER_VERSION = "fccp-listing-v1";
+export const FCCP_ORIGIN = "https://fccp.gov.pk";
+export const FCCP_LISTING_URL = `${FCCP_ORIGIN}/api/public/site/publications/judgement`;
+export const FCCP_PARSER_VERSION = "fccp-api-v1";
+const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
 export type FccpCandidate = {
   identityHash: string;
@@ -18,90 +20,77 @@ export type FccpCandidate = {
 export type ParsedListing = {
   candidates: FccpCandidate[];
   rejected: { row: number; reason: string }[];
-  sourceTotal: number | null;
+  sourceTotal: number;
+  next: string | null;
 };
 
-export type PagePosition = { start: number; end: number; total: number; nextPage: number | null };
+const PAGE = z.object({
+  items: z.array(z.unknown()).max(200),
+  total: z.number().int().min(0),
+  start: z.number().int().min(1),
+  next: z.string().min(1).max(2000).nullable(),
+});
+
+const ITEM = z.object({
+  kind: z.literal("judgement"),
+  body: z.object({
+    file: z.string().regex(/^[\da-f]{64}$/),
+    title: z.string().trim().min(5).max(500),
+    authors: z.array(z.string().trim().min(5).max(300)).min(1).max(10),
+    issuedAt: z.iso.datetime(),
+  }),
+  files: z.array(z.object({ sha256: z.string(), contentType: z.string(), sizeBytes: z.number() })),
+});
 
 const hash = (value: string): string => createHash("sha256").update(value).digest("hex");
 const clean = (value: string): string => value.replace(/\s+/g, " ").trim();
 
-function validDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+/** The court's own calendar date: issuedAt is UTC, and Pakistan has no daylight saving (UTC+5). */
+export function pakistanDate(isoInstant: string): string {
+  return new Date(Date.parse(isoInstant) + 5 * 3600_000).toISOString().slice(0, 10);
 }
 
-/** Fail closed on page drift, invalid fields, duplicate identities, or foreign download links. */
-export function parseFccpListing(html: string): ParsedListing {
-  const $ = load(html);
-  const rows = $("tbody tr").filter((_, row) => $(row).find('td[data-label="Case Title"]').length > 0);
-  if (rows.length === 0 || rows.length > 20) throw new Error("FCCP listing layout changed or page size exceeded 20 rows.");
+/** Stable, content-addressed PDF link on the official host. */
+export function fccpFileUrl(sha256: string): string {
+  return `${FCCP_ORIGIN}/api/public/site/files/${sha256}`;
+}
+
+/**
+ * Validate one API page; fail closed on shape drift, reject bad rows individually.
+ * Hash inputs match the retired HTML parser, so existing candidates keep their identity.
+ */
+export function parseFccpPage(json: unknown): ParsedListing {
+  const page = PAGE.safeParse(json);
+  if (!page.success) throw new Error("FCCP listing API shape changed.");
   const candidates: FccpCandidate[] = [];
   const rejected: ParsedListing["rejected"] = [];
   const seen = new Set<string>();
-  rows.each((index, row) => {
-    const field = (label: string) => clean($(row).find(`td[data-label="${label}"]`).text());
-    const title = field("Case Title");
-    const authorJudge = field("Author Judge");
-    const sourceType = field("Type");
-    const uploadDate = field("Upload Date") || null;
-    const href = $(row).find('td[data-label="Download"] a[href]').attr("href") ?? "";
-    let reason: string | undefined;
-    let downloadUrl = "";
-    try {
-      const url = new URL(href, FCCP_LISTING_URL);
-      if (url.origin !== "https://www.fccp.gov.pk" || url.username || url.password
-        || !url.pathname.startsWith("/download/") || url.pathname === "/download/") {
-        throw new Error("unexpected download host or path");
-      }
-      downloadUrl = url.toString();
-    } catch {
-      reason = "invalid official download URL";
+  page.data.items.forEach((raw, index) => {
+    const item = ITEM.safeParse(raw);
+    if (!item.success) {
+      rejected.push({ row: index + 1, reason: "invalid or unrecognised listing item" });
+      return;
     }
-    if (!reason && (title.length < 5 || title.length > 500)) reason = "invalid case title";
-    if (!reason && (authorJudge.length < 5 || authorJudge.length > 300)) reason = "invalid author judge";
-    if (!reason && sourceType !== "Judgement" && sourceType !== "Order") reason = "unrecognised document type";
-    if (!reason && uploadDate !== null && !validDate(uploadDate)) reason = "invalid upload date";
+    const { file, title: rawTitle, authors, issuedAt } = item.data.body;
+    const pdf = item.data.files.find((entry) => entry.sha256 === file);
+    if (!pdf || pdf.contentType !== "application/pdf" || pdf.sizeBytes <= 0 || pdf.sizeBytes > MAX_PDF_BYTES) {
+      rejected.push({ row: index + 1, reason: "missing or oversized official PDF" });
+      return;
+    }
+    const title = clean(rawTitle);
+    const authorJudge = authors.map(clean).join(", ");
+    const sourceType = "Judgement" as const;
+    const uploadDate = pakistanDate(issuedAt);
     const identityHash = hash(JSON.stringify([title.toLowerCase(), sourceType]));
-    if (!reason && seen.has(identityHash)) reason = "duplicate listing identity";
-    if (reason) {
-      rejected.push({ row: index + 1, reason });
+    if (seen.has(identityHash)) {
+      rejected.push({ row: index + 1, reason: "duplicate listing identity" });
       return;
     }
     seen.add(identityHash);
     candidates.push({
-      identityHash,
-      metadataHash: hash(JSON.stringify([title, authorJudge, sourceType, uploadDate])),
-      title, authorJudge, sourceType: sourceType as FccpCandidate["sourceType"], uploadDate, downloadUrl,
+      identityHash, metadataHash: hash(JSON.stringify([title, authorJudge, sourceType, uploadDate])),
+      title, authorJudge, sourceType, uploadDate, downloadUrl: fccpFileUrl(file),
     });
   });
-  const summary = clean($(".pagination-summary").text());
-  const match = /\bof\s+([\d,]+)\b/i.exec(summary);
-  return { candidates, rejected, sourceTotal: match ? Number(match[1].replace(/,/g, "")) : null };
-}
-
-/** Verify the source's own range and next link before a multi-page import. */
-export function validateFccpPage(html: string, page: number, observedRows: number): PagePosition {
-  const $ = load(html);
-  const summary = clean($(".pagination-summary").text());
-  const match = /^Showing\s+([\d,]+)\s*[–—-]\s*([\d,]+)\s+of\s+([\d,]+)$/i.exec(summary);
-  if (!match) throw new Error(`Page ${page} has no valid pagination range.`);
-  const [start, end, total] = match.slice(1).map((value) => Number(value.replace(/,/g, "")));
-  if (page < 1 || start !== (page - 1) * 10 + 1 || end < start || end > total
-    || end - start + 1 !== observedRows || observedRows > 10) {
-    throw new Error(`Page ${page} has an inconsistent pagination range.`);
-  }
-  const expectedNext = end < total ? page + 1 : null;
-  const href = $(".pagination a[rel='next']").attr("href");
-  if (expectedNext === null && href) throw new Error(`Page ${page} unexpectedly has a next link.`);
-  if (expectedNext !== null) {
-    if (!href) throw new Error(`Page ${page} is missing its next link.`);
-    const url = new URL(href, FCCP_LISTING_URL);
-    if (url.origin !== "https://www.fccp.gov.pk" || url.pathname !== "/judgements"
-      || url.searchParams.size !== 1 || url.searchParams.get("page") !== String(expectedNext)) {
-      throw new Error(`Page ${page} has an unexpected next link.`);
-    }
-  }
-  return { start, end, total, nextPage: expectedNext };
+  return { candidates, rejected, sourceTotal: page.data.total, next: page.data.next };
 }

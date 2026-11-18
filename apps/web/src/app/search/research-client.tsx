@@ -10,7 +10,7 @@ type Hit = {
   sourceName: string; sourceCode: string; checkedAt: string; versionId: string;
   court: string | null; caseNumber: string | null; date: string | null;
   authorJudge: string | null; citation: string | null; jurisdiction: string | null;
-  instrumentType: string | null; enactmentYear: number | null; legalStatus: string | null; excerpt: string | null;
+  instrumentType: string | null; enactmentYear: number | null; legalStatus: string | null; excerpt: string | null; summary: string | null;
 };
 type Coverage = { sourceCode: string; kind: string; count: number };
 type SearchResponse = { items: Hit[]; total: number; page: number; limit: number; coverage: Coverage[]; error?: { message: string } };
@@ -121,7 +121,7 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
   return <div className="page-wrap research-page">
     <div className="research-heading"><p className="eyebrow">PUBLIC RESEARCH / REVIEWED SOURCES</p>
       <h1>Research the record.</h1>
-      <p className="intro">Find published records and verify each result at its official source. Coverage is measured from this pilot collection.</p>
+      <p className="intro">Find published records and verify each result at its official source. Coverage is measured from the reviewed collection.</p>
     </div>
     <div className="research-layout">
       <nav className="research-nav" aria-label="Search collections">
@@ -134,7 +134,7 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
         <section className="research-panel" aria-labelledby="search-heading">
           <div className="research-panel-heading"><div><p className="eyebrow">{initialMode === "statutes" ? "LEGISLATION" : "JUDGMENTS"}</p>
             <h2 id="search-heading">{selected.label} search</h2></div>
-            <span className="scope-pill">{initialMode === "statutes" ? "Reviewed sources only" : "FCCP pilot"}</span></div>
+            <span className="scope-pill">{initialMode === "statutes" ? "Reviewed sources only" : "FCCP only"}</span></div>
           {initialMode === "courtwise" && <p className="field-note">Covered court: Federal Constitutional Court of Pakistan. Other courts have not been indexed.</p>}
           {initialMode === "citation" && <p className="field-note">Reporter citations are returned only when a reviewer has verified the citation field. Use Case Law for case identifiers.</p>}
           {initialMode === "advanced" && <p className="field-note">Decision date filters include only records with a verified decision date. A source upload date is different.</p>}
@@ -180,7 +180,8 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
             <p>{hit.kind === "judgment"
               ? `${hit.citation ? `Reporter citation: ${hit.citation}` : `Case identifier: ${hit.caseNumber ?? "Not recorded"}`}${hit.authorJudge ? ` · ${hit.authorJudge}` : ""}${hit.date ? ` · Decided ${displayDate(hit.date)}` : ""}`
               : `${hit.citation ? `Official citation: ${hit.citation}` : hit.instrumentType ?? "Instrument type unknown"}${hit.enactmentYear ? ` · ${hit.enactmentYear}` : ""} · Status: ${hit.legalStatus?.replaceAll("_", " ") ?? "unknown"}`}</p>
-            {hit.excerpt && <p className="hit-excerpt">{hit.excerpt}</p>}
+            {hit.summary ? <p className="hit-excerpt"><span className="ai-label">AI summary</span> {hit.summary}</p>
+              : hit.excerpt && <p className="hit-excerpt">{hit.excerpt}</p>}
             <div className="hit-footer"><span>Source checked {displayDate(hit.checkedAt)}</span><a href={hit.sourceUrl} target="_blank" rel="noopener noreferrer">Official source ↗</a></div>
           </article>)}
           {result && result.items.length === 0 && <div className="empty-state"><strong>No record in this collection.</strong><p>{initialMode === "statutes" && covered === 0

@@ -1,49 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { parseFccpListing } from "../src/fccp-listing.js";
+import { parseFccpPage, pakistanDate } from "../src/fccp-listing.js";
 import { robotsAllowsListing } from "../src/fccp-fetch.js";
+import { item, page, sha } from "./fccp-fixtures.js";
 
-const row = (title: string, date = "2026-10-02", link = "https://www.fccp.gov.pk/download/test") => `
-  <tr><td class="file-table__title" data-label="Case Title">${title}</td>
-  <td data-label="Author Judge">Mr. Justice Example</td><td data-label="Type">Judgement</td>
-  <td data-label="Upload Date">${date}</td><td data-label="Download"><a href="${link}">DOWNLOAD</a></td></tr>`;
-const page = (rows: string) => `<table><tbody>${rows}</tbody></table><p class="pagination-summary">Showing 1&ndash;10 of 111</p>`;
-
-describe("FCCP metadata adapter", () => {
-  it("parses an official-style row and keeps upload date separate from a decision date", () => {
-    const result = parseFccpListing(page(row("C.P.L.A. No. 1285-K of 2023")));
-    expect(result.candidates).toMatchObject([{ title: "C.P.L.A. No. 1285-K of 2023", uploadDate: "2026-10-02" }]);
-    expect(result.sourceTotal).toBe(111);
-    expect(result.rejected).toEqual([]);
+describe("FCCP API adapter", () => {
+  it("keeps the identity and metadata hashes of the retired HTML parser", () => {
+    // Values staged by fccp-listing-v1 for this row; a change here would quarantine every published judgment.
+    const [candidate] = parseFccpPage(page([item("C.P.L.A. No. 1285-K of 2023")])).candidates;
+    expect(candidate.identityHash).toBe(sha(JSON.stringify(["c.p.l.a. no. 1285-k of 2023", "Judgement"])));
+    expect(candidate.metadataHash).toBe(sha(JSON.stringify(["C.P.L.A. No. 1285-K of 2023", "Mr. Justice Example", "Judgement", "2026-10-02"])));
+    expect(candidate.downloadUrl).toBe(`https://fccp.gov.pk/api/public/site/files/${sha("C.P.L.A. No. 1285-K of 2023")}`);
   });
 
-  it("keeps an item's identity when the source changes its upload date", () => {
-    const first = parseFccpListing(page(row("C.P.L.A. No. 1285-K of 2023", "2026-10-02"))).candidates[0];
-    const revised = parseFccpListing(page(row("C.P.L.A. No. 1285-K of 2023", "2026-10-03"))).candidates[0];
-    expect(revised.identityHash).toBe(first.identityHash);
-    expect(revised.metadataHash).not.toBe(first.metadataHash);
+  it("dates items in Pakistan time", () => {
+    expect(pakistanDate("2026-10-01T19:00:00Z")).toBe("2026-10-02");
+    expect(pakistanDate("2026-11-13T11:30:00Z")).toBe("2026-11-13");
   });
 
-  it("quarantines foreign links, impossible dates, and duplicate identities", () => {
-    const result = parseFccpListing(page(
-      row("Valid case") + row("Foreign case", "2026-10-02", "https://evil.example/download/file")
-      + row("Bad date case", "2026-02-30") + row("Valid case"),
-    ));
+  it("rejects bad rows individually and duplicate identities", () => {
+    const badFile = { ...item("Missing file case"), files: [] };
+    const result = parseFccpPage(page([item("Valid case"), badFile, item("Valid case"), { kind: "news" }]));
     expect(result.candidates).toHaveLength(1);
-    expect(result.rejected.map((item) => item.reason)).toEqual([
-      "invalid official download URL", "invalid upload date", "duplicate listing identity",
+    expect(result.rejected.map((entry) => entry.reason)).toEqual([
+      "missing or oversized official PDF", "duplicate listing identity", "invalid or unrecognised listing item",
     ]);
   });
 
-  it("preserves a missing upload date as unknown source metadata", () => {
-    const result = parseFccpListing(page(row("C.P.L.A. No. 229-Q of 2024", "")));
-    expect(result.rejected).toEqual([]);
-    expect(result.candidates[0].uploadDate).toBeNull();
-  });
-
-  it("stops on a changed page layout or restrictive robots rule", () => {
-    expect(() => parseFccpListing("<html><body>No listing table</body></html>")).toThrow(/layout changed/);
+  it("stops on a changed API shape or restrictive robots rule", () => {
+    expect(() => parseFccpPage({ results: [] })).toThrow(/shape changed/);
     expect(robotsAllowsListing("User-agent: *\nDisallow:\n")).toBe(true);
-    expect(robotsAllowsListing("User-agent: *\nDisallow: /judgements\n")).toBe(false);
-    expect(robotsAllowsListing("User-agent: *\nDisallow: /\n")).toBe(false);
+    expect(robotsAllowsListing("User-agent: *\nDisallow: /api\n")).toBe(false);
   });
 });

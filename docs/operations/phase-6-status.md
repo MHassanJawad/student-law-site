@@ -17,13 +17,65 @@ Updated: 2026-10-25. This is a verification pass on the pilot, not a public laun
 - [CI run 40186979201](https://github.com/MHassanJawad/student-law-site/actions/runs/40186979201) built the frontend after starting disposable Supabase, then signed in through the browser and checked the saved library, open note editor, account settings, and operator studio at 390px and 1280px. Axe reported no violations on these pages or the previously checked public pages. This covers rendered states, not screen-reader announcements or the full keyboard interaction sequence.
 - Prepared a [small student beta script](beta-session.md) with concrete phone, desktop, and keyboard tasks. No testers have been recruited or invited yet.
 
+## Security and launch-readiness pass
+
+- The API contract promised `429` responses, but none were implemented. Added per-client, in-memory rate limits in `src/proxy.ts`:
+  - Search: 120 per minute.
+  - Other public reads: 240 per minute.
+  - Account operations: 60 per minute.
+  - Account deletion: 5 per 15 minutes.
+
+  The client address is read from the right of `X-Forwarded-For`, so a client cannot spoof it behind a trusted proxy. Unit tests cover the rules, windows, key bound, and address parsing.
+- Added Content-Security-Policy, HSTS, and Cross-Origin-Opener-Policy to the existing headers. The browser check now also fails on any CSP violation.
+- Added `GET /api/v1/health` and `MAINTENANCE_MODE`.
+- Added `/about`, with scope, disclaimer, and terms of use, and `/privacy`, a privacy notice written from the actual data inventory. Both are linked from the footer and included in the axe check.
+- Added CI checks:
+  - `ci-security-checks.mjs` covers headers, health, a SQL-injection payload, unauthenticated `/me` denial, and an observed `429` with `Retry-After`.
+  - A container job builds the [Dockerfile](../../Dockerfile), then checks pages, headers, the non-root user, and an honest `503` health status without a database.
+  - A gitleaks history scan.
+  - Dependabot for npm, Actions, and Docker.
+- Local results on Windows:
+  - Lint, typecheck, 36 unit tests (12 new), the default build, and the standalone build all pass.
+  - Against the built server, the CSP and HSTS headers were present.
+  - Health returned `503` with `database: failed`, because no local database runs.
+  - Exactly 240 reads were allowed before `429` with `Retry-After: 60`.
+  - The new CI jobs need a pull request run to confirm.
+- Added the [security](../SECURITY.md), [data privacy](../DATA_PRIVACY.md), [deployment](../DEPLOYMENT.md), [runbook](../RUNBOOK.md), [licence inventory](../THIRD_PARTY_LICENSES.md), and [launch readiness](launch-readiness.md) documents.
+
+## Legislation importer and corpus sync
+
+- Reviewed Pakistan Code access on 2026-10-30: robots.txt restricts only Googlebot from `/pdffiles/`, and the disclaimer says every law is under review. Added a bounded, one-letter-per-run importer for the Federal Laws tab, a private `legislation_candidates` queue (migration 017), an atomic approve function, and a review CLI. See the [runbook](pakistan-code-ingestion.md).
+- A live parse on the same day found:
+  - A: 53 candidates;
+  - C: 105 candidates, none rejected;
+  - P: 194 candidates and one repeated row, rejected.
+
+  Nothing was staged or published, because local Supabase is off.
+- Added `npm run sync:corpus`, which upserts published, withdrawn, and quarantined records, with their versions, metadata, and sections, to a hosted target. Dry run is the default. It also replaces the manual dump for the first hosted load.
+- Found and fixed a privilege gap (migration 018). Supabase's default `EXECUTE` grants let the public key call the worker-only FCCP approve and withdraw functions; an anonymous caller still needed an unguessable candidate UUID. CI now checks that all three functions refuse the public key.
+- `ci-legislation-sync.mjs` covers fixture import idempotence, the source-approval gate, publication into statutes search with unknown status, and an idempotent sync. These checks run only in CI.
+
+## Local database run (2026-11-09)
+
+Run on Windows with Docker data on D:, in a throwaway Supabase project (`student-law-ci`) so the checks could not touch the owner's pilot database. The scripts' `GITHUB_ACTIONS` guard was set by hand for that stack, and Edge replaced Chrome.
+
+- Migrations 001-018 applied to a fresh database; `supabase db lint` reported no schema errors.
+- Passed: account isolation, the Phase 5 lifecycle, the offline ingestion failure drill, `ci-legislation-sync.mjs` (now also covering a moved link and a changed-then-re-reviewed law), axe at 390px and 1280px on all pages with no CSP violations, and `ci-security-checks.mjs`.
+- Latency on the small seeded corpus: p95 79 ms case law, 29 ms statutes, 33 ms empty citation, 42 ms document detail.
+- The container image built (230 MB) and passed its smoke test. gitleaks found no leaks in 37 commits.
+- Not rerun: the two restore drills, which refuse anything but the GitHub Linux runner, and the new CI jobs on GitHub itself.
+- On the owner's local database, after a backup: applied migrations 017 and 018 with `migration up`. The 110 FCCP candidates and 3 published records were unchanged, and `test:ingestion-local` passed. A live import of letter A staged 53 laws privately; none were published and the source remains disabled.
+- Local Docker needs `memory=4GB` and a D: `swapFile` in `.wslconfig`. Without the cap, starting the VM grew `C:\pagefile.sys` by about 3.5 GB.
+
 ## Pending before a beta or public release
 
-- Local Docker Desktop is excluded while C: is full. Its WSL image is on D:, but its Windows application and settings still use C:. CI database checks run on an isolated Linux runner. Restore of real user data and non-database assets remains pending before hosting users.
+- Restore of real user data and non-database assets remains pending before hosting users.
 - Perform full keyboard and screen-reader checks on search, document, sign-in, saved citations, and editorial pages. The automated axe/skip-link checks now cover signed-in rendered states, but not screen-reader announcements or complete keyboard interactions. The computer-use browser helper exited twice during the earlier manual pass, so interactive assistive-technology checks remain open.
 - Measure search latency with a larger, representative corpus and compare fresh published records with their linked official documents. CI holds only labeled metadata samples; the separately reviewed FCCP pilot record remains in the owner's local database, which is unavailable while local Docker stays off.
 - Arrange a small student beta and collect feedback. A qualified reviewer must check any substantive learning content before publication; those collections are currently empty.
 - Verify recovery email delivery with the eventual email provider, and test a hosted backup/restore path, including database data and any stored PDFs, before hosting real user data.
+
+- Run the corpus sync against a real hosted project for the first time. CI has only run it with the local database as both source and target.
 
 ## Tasks requiring human action
 

@@ -20,10 +20,11 @@ export function CoverageSummary() {
     return () => controller.abort();
   }, []);
   if (unavailable) return <p className="coverage-note">Current coverage is temporarily unavailable.</p>;
-  if (!coverage) return <p className="coverage-note" aria-live="polite">Checking current pilot coverage...</p>;
+  if (!coverage) return <p className="coverage-note" aria-live="polite">Checking current coverage...</p>;
   const total = coverage.sources.filter((source) => source.kind === "judgment")
     .reduce((sum, source) => sum + source.count, 0);
   const laws = coverage.sources.filter((source) => source.kind === "legislation")
     .reduce((sum, source) => sum + source.count, 0);
-  return <p className="coverage-note" aria-live="polite">{total} published judgment{total === 1 ? "" : "s"} and {laws} legislation record{laws === 1 ? "" : "s"} in this local pilot. This is not a complete archive.</p>;
+  const checked = coverage.sources.map((source) => source.lastCheckedAt ?? "").sort().pop();
+  return <p className="coverage-note" aria-live="polite">{total} published judgment{total === 1 ? "" : "s"} and {laws} legislation record{laws === 1 ? "" : "s"} reviewed so far. This is not a complete archive.{checked ? ` Sources last checked ${new Date(checked).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}.` : ""}</p>;
 }

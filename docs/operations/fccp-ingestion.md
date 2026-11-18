@@ -1,34 +1,60 @@
-# FCCP ingestion and review runbook
+# FCCP ingestion, text, and summary runbook
 
-Initial snapshot: 2026-10-06. Source: [Federal Constitutional Court of Pakistan judgments listing](https://www.fccp.gov.pk/judgements). The official [robots.txt](https://www.fccp.gov.pk/robots.txt) returned `User-agent: *` with an empty `Disallow` rule. The owner has **no formal portal permission** and relies on the judgment exception in [Pakistan's Copyright Ordinance, 1962, section 57(1)(q)(ii)](https://pakistancode.gov.pk/pdffiles/administrator5d255d1f44b50b65d6a3e87a2e0d3fee.pdf), subject to any prohibition by the issuing court or authority. This copyright provision does not specify a website request rate or access method. No separate FCCP terms governing automated collection were found in this review. Collection remains manually triggered and bounded. No source text or PDF bytes are published by this workflow.
+Updated 2026-11-15. Source: the [Federal Constitutional Court of Pakistan judgments page](https://fccp.gov.pk/judgements). The owner confirmed on 2026-11-15 that FCCP judgments are public material the project may download, store, display in full, and summarise. The importer, text extraction, and summaries rely on that decision.
 
-## Scope and behavior
+## How the source works
 
-- `--live` checks robots.txt and downloads only page 1. `--all` checks robots.txt once, fetches at most 15 listing pages with five seconds between requests, validates each reported range and total, then rechecks page 1 for drift. A mismatched snapshot fails before staging. Requests use a fixed official host, a 15-second timeout, no redirects, and byte limits of 32 KiB for robots.txt and 1 MiB per listing page. If two pages show the same title and type and the later row lacks an upload date, the worker fetches both PDFs five seconds apart. It counts the second row as a duplicate only if the PDF hashes match; otherwise it flags an ambiguous row and disables removal reconciliation.
-- The listing parser reads case title, author judge, source type, upload date when present, and the official download link. A blank upload date remains `null` and is counted as a source quality issue; it is never invented or treated as decision date.
-- Records enter a private review queue. The source generates different download URLs across visits, so title and type form the pilot identity fingerprint. A collision or changed metadata, including upload date, needs review; it is not silently published. Published source links refresh on unchanged runs.
-- One listing page showed 10 rows out of 111 on 2026-10-06. On 2026-10-11, all 12 pages showed 111 rows. The last row had a blank upload date and repeated an earlier title/type; both links returned identical 186,352-byte PDFs with SHA-256 `237db69ce2fdbb7204f50268df5206f6a9e0251f9c0f713c2a5748b58cd6b6a9`. A complete listing run records observed rows, unique candidates, verified duplicates, page count, and missing-date count. **Observed listing coverage is distinct from reviewed, published judgment coverage.** Orders are staged but the approval function accepts judgments only.
-- A complete, validated snapshot quarantines previously seen candidates absent from the listing; an operator decides whether to withdraw the associated published record. One-page runs never infer removal.
-- `inspect:fccp-pdf` fetches one approved judgment PDF selected by UUID, with a 15 MiB limit and no redirects. Mozilla PDF.js extracts text into a private, versioned inspection row with byte hash, page count, and quality status. Scanned or sparse PDFs require a different extraction path. Inspection never makes source text public or creates a summary.
+On 2026-11-13 FCCP moved to `https://fccp.gov.pk` and rebuilt the site as a JavaScript app. The judgment listing now comes from a public JSON API:
 
-## Local operation
+- **Listing:** `GET /api/public/site/publications/judgement?size=50`, with the response's `next` value passed back as `cursor` for the following page. Each item carries the case title, author judges, the issue time (`issuedAt`, UTC), and the SHA-256 of its PDF.
+- **PDF:** `GET /api/public/site/files/<sha256>`. The link is permanent because it is named by the file's hash, and the worker checks the downloaded bytes against that hash.
+- **Orders:** the judgment feed lists judgments only. The 27 orders staged from the old HTML table are not in it, so the first API run quarantined them. They were never published.
+- **robots.txt:** the site has none. Its app shell answers that path instead. The worker treats that as no policy. If a real `robots.txt` appears, it must allow the wildcard agent, or the run stops.
 
-1. Start local Supabase and run `npx supabase db reset --local` on a disposable database. Set `apps/worker/.env` from the local service-role key. Do not put it in the web app.
-2. Run `npm run ingest:fccp -- --live` for a one-page check or `npm run ingest:fccp -- --all` for the bounded full listing. A run report contains observed, staged, unchanged, quarantined, missing, verified duplicate, rejected, page, and source-total counts.
-3. Run `npm run review:fccp -- report` and `npm run review:fccp -- list pending 1`. The list command accepts a status and page number, 25 candidates at a time. Compare candidate fields and the linked official item with the source page.
-4. After the source-specific review, run `npm run review:fccp -- activate-source --metadata-only`. This rechecks robots.txt and records the limited approval in `source_registry`.
-5. Approve a verified judgment with `npm run review:fccp -- approve <candidate-uuid> "<review evidence of at least 10 characters>"`. Approval is an atomic database operation. Use `reject` for a false pending record. For a quarantined source change, use `accept-change` after comparison, then `approve` as a separate action. Use `withdraw` with a documented reason for a confirmed removal. If a missing item reappears in a later run, use `reopen` and separately approve it.
-6. To inspect one approved PDF, first refresh its source link with a listing run, then run `npm run inspect:fccp-pdf -- <candidate-uuid>`. Run `npm run review:fccp -- pdf-list` to see extraction quality. Compare the extracted text against the official PDF before `pdf-review <inspection-uuid> "<evidence>"`; use `pdf-reject` for poor extraction. Extracted text remains private after review.
+Published records link "Open official source" to the court's search for the case title (migration 019), because a direct file link downloads instead of opening a page.
 
-The worker rejects non-local Supabase URLs. On Windows PowerShell with script execution disabled, use `npm.cmd` and `npx.cmd`.
+## Identity
 
-## Failure and correction handling
+A candidate's identity is a hash of its lower-cased title and type, and its metadata hash covers title, judges, type, and upload date. The API adapter (`fccp-api-v1`) computes both exactly as the retired HTML parser did. It derives the upload date from `issuedAt` in Pakistan time (UTC+5). The first API run therefore found all 83 earlier candidates unchanged. A test pins this, because a different hash would quarantine every published judgment.
 
-- A non-200 response, redirect, unexpected content type, oversized body, restrictive robots rule, or changed table layout stops the run. Check the private run report before retrying. Do not bypass access controls or increase request volume to resolve a failure.
-- Invalid individual rows are excluded and reported; a blank date is preserved as unknown instead. A metadata change quarantines the candidate and any already published document until reviewed. An unchanged rerun makes no duplicate candidates or versions.
-- Page 1 absence is **not** proof of removal, because older items move to later pages. Only a complete validated snapshot can quarantine a missing candidate; withdrawal requires a separate human decision.
-- To withdraw a confirmed removal, use `npm run review:fccp -- withdraw <candidate-uuid> "<reason of at least 10 characters>"`. The database function updates the document and review record together. The review queue remains private under RLS.
+## Commands
 
-## Next gate
+All commands run on the operator machine against local Supabase. They refuse a remote database.
 
-Before unattended collection, broad PDF/text ingestion, or public summaries: confirm whether FCCP publishes access conditions or a prohibition affecting judgment reuse, review the chosen five-second interval with the source operator if one is available, measure parser accuracy across the observed listing, handle scanned PDFs with a separately tested OCR path, and define an editorial summary review process. The owner intends to publish original summaries rather than copied source text, so summaries require source traceability, factual checks, and editorial review. Federal and provincial legislation need separate source checks and adapters.
+1. **Import the listing.** `npm run ingest:fccp -- --all` follows every page with five seconds between requests (at most 20 pages), checks the reported total, and rechecks page one for drift. It stages new judgments, refreshes links on unchanged ones, and quarantines changed or missing ones. `--file PATH` imports a saved API page offline.
+2. **Review and approve.** Use `npm run review:fccp -- list`, then `approve <candidate-uuid> "<note>"`, as before. `reject`, `withdraw`, `accept-change`, and `reopen` are unchanged.
+3. **Extract text.** `npm run extract:fccp-text -- --limit 50` downloads the PDF of each approved, published judgment that has no text yet, five seconds apart. PDF.js extracts its text layer, and a private `pdf_inspections` row records the hash, page count, and quality.
+   - **Extractable text:** published at once on the judgment's current version (`text_kind = extracted`).
+   - **Scanned or sparse PDFs:** not published, because they need OCR. The command reports them and skips them on later runs.
+4. **Draft summaries.** `npm run summarize:judgments -- --limit 10` sends each judgment's text to the configured model and stores a short draft privately in `summary_drafts`. It needs `SUMMARY_API_KEY` (see [environment variables](../ENVIRONMENT_VARIABLES.md)).
+   - **Long judgments:** text over `SUMMARY_MAX_INPUT_CHARS` (default 12,000) is trimmed to its start and end, where the parties and the decision usually are.
+   - **Model declines:** if the model says the text is insufficient, no draft is stored.
+5. **Review summaries.**
+   - `npm run review:summaries -- list` shows pending drafts.
+   - `approve <draft-uuid> "<note>"` copies a draft onto the public version, and `reject <draft-uuid> "<note>"` discards it so the next run drafts again.
+   - `unpublish <draft-uuid> "<note>"` removes an approved summary.
+   - `approve-all "<note>"` approves every pending draft. Use it only after reading them.
+6. **Publish.** Run `npm run sync:corpus`, then `npm run sync:corpus -- --apply`. Text and approved summaries travel with each document version. The hosted database needs migration 020 (`npx supabase db push`) before the first sync that carries summaries.
+
+## What the public sees
+
+- **Document page:** the AI summary under a "Summary" heading with an "AI-generated" label. The label names the model and the review date, and says to rely on the full text. The full extracted text follows.
+- **Search results:** the summary under each result, labelled "AI summary". A result without one shows the opening of the judgment text instead.
+- **Drafts:** unreviewed drafts are never public. `summary_drafts` has row-level security on and no policies.
+
+## Failure handling
+
+The listing stops without staging anything when any of these happen:
+
+- a non-200 response or a redirect;
+- an unexpected content type or an oversized body;
+- a change in the API's shape or total;
+- a restrictive robots rule.
+
+Invalid single items are rejected and reported, and a run with rejected items does not quarantine missing records. Text extraction and summary drafting continue past a failed item, report it, and exit non-zero. The summary command waits out HTTP 429 rate limits up to three times per item, and logs only the HTTP status of other API errors.
+
+## Known limits
+
+- **Scanned PDFs:** these need an OCR path, which does not exist yet.
+- **Search scope:** search still matches titles and case numbers only, not the judgment text.
+- **Model trust:** summaries depend on the model's accuracy. Human review is the control, so read before approving.

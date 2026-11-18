@@ -25,8 +25,8 @@ Phase 1 baseline, 2026-09-27. Source: project PDF, `plan.md`, [Phase 0 discovery
 | Story | Need | Requirements | Screen/API/verification |
 | --- | --- | --- | --- |
 | US-001 | As a student, I want to find FCCP judgments so I can research a question. | FR-001, FR-002 | Home/search; `/api/v1/search/judgments`; query/filter tests. |
-| US-002 | As a student, I want to look up a citation so I can reach the right judgment. | FR-003 | Citation Search; `/api/v1/search/citations`; ambiguity tests. |
-| US-003 | As a researcher, I want to search laws by jurisdiction so I can locate applicable legislation. | FR-004, FR-008 | Statutes Search; `/api/v1/search/legislation`; coverage tests. |
+| US-002 | As a student, I want to look up a citation so I can reach the right judgment. | FR-003 | Citation Search; `/api/v1/search/research?mode=citation`; ambiguity tests. |
+| US-003 | As a researcher, I want to search laws by jurisdiction so I can locate applicable legislation. | FR-004, FR-008 | Statutes Search; `/api/v1/search/research?mode=statutes`; coverage tests. |
 | US-004 | As a student, I want to inspect a document and its source so I can verify it. | FR-005 | Detail; `/api/v1/documents/{id}`; provenance checks. |
 | US-005 | As a student, I want saved citations on another device so I can resume study. | FR-007, FR-012 | Sign-in/saved list; `/api/v1/me/saved-citations`; two-session and ownership tests. |
 | US-006 | As an operator, I want safe repeatable imports so the corpus stays current. | FR-006, FR-010 | Worker/review CLI; run, rerun, quarantine tests. |
@@ -39,8 +39,8 @@ Phase 1 baseline, 2026-09-27. Source: project PDF, `plan.md`, [Phase 0 discovery
 | --- | --- | --- | --- |
 | FR-001 | Home and navigation | Published document/editorial lists | TC-017 |
 | FR-002 | Case Law, Courtwise, Advanced | `judgment_metadata`; `/search/judgments` | TC-001/002/006 |
-| FR-003 | Citation Search | `citation_aliases`; `/search/citations` | TC-003/004 |
-| FR-004 | Statutes Search | `legislation_metadata`; `/search/legislation` | TC-005/006 |
+| FR-003 | Citation Search | `citation_aliases`; `/search/research?mode=citation` | TC-003/004 |
+| FR-004 | Statutes Search | `legislation_metadata`; `/search/research?mode=statutes` | TC-005/006 |
 | FR-005 | Document detail | `document_versions`, `document_sections`; `/documents/{id}` | TC-007/019 |
 | FR-006 | Worker and quarantine | `source_registry`, `ingestion_runs`, `document_versions` | TC-008/009/010/011/012 |
 | FR-007 | Account and Saved Citations | `saved_citations`; `/me/saved-citations` | TC-013/014/015 |
