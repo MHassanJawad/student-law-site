@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EDITORIAL_KIND, EDITORIAL_LABEL } from "@/lib/editorial";
+import { Loader } from "../../../loader";
 
 type Entry = { title: string; summary: string; body: string; author: string; topic: string | null;
   source_url: string | null; provenance_note: string; published_at: string; reviewed_at: string };
@@ -14,7 +15,7 @@ export default function EditorialEntryPage() {
   const { kind, slug } = useParams<{ kind: string; slug: string }>();
   const collection = EDITORIAL_KIND.safeParse(kind);
   const [entry, setEntry] = useState<Entry | null>(null);
-  const [message, setMessage] = useState("Loading entry…");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!collection.success) return;
@@ -32,7 +33,7 @@ export default function EditorialEntryPage() {
   if (!collection.success) return <div className="page-wrap"><h1>Collection not found</h1><Link href="/">Return home</Link></div>;
   return <div className="page-wrap narrow-page">
     <Link className="back-link" href={`/learn/${kind}`}>&larr; Back to {EDITORIAL_LABEL[collection.data]}</Link>
-    <p role="status">{message}</p>
+    {message ? <p role="status">{message}</p> : !entry && <Loader label="Loading entry…" page />}
     {entry && <article>
       <p className="eyebrow">{entry.topic || EDITORIAL_LABEL[collection.data].toUpperCase()}</p>
       <h1>{entry.title}</h1><p className="intro">{entry.summary}</p>

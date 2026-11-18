@@ -34,11 +34,13 @@ All commands run on the operator machine against local Supabase. They refuse a r
    - `approve <draft-uuid> "<note>"` copies a draft onto the public version, and `reject <draft-uuid> "<note>"` discards it so the next run drafts again.
    - `unpublish <draft-uuid> "<note>"` removes an approved summary.
    - `approve-all "<note>"` approves every pending draft. Use it only after reading them.
-6. **Publish.** Run `npm run sync:corpus`, then `npm run sync:corpus -- --apply`. Text and approved summaries travel with each document version. The hosted database needs migration 020 (`npx supabase db push`) before the first sync that carries summaries.
+6. **Publish.** Run `npm run sync:corpus`, then `npm run sync:corpus -- --apply`. Text and approved summaries travel with each document version. The hosted database needs migration 020 (`npx supabase db push`) before the first sync that carries summaries, and migration 021 before the web release that adds the PDF reader, because the document page reads `source_pdf_sha256`.
 
 ## What the public sees
 
-- **Document page:** the AI summary under a "Summary" heading with an "AI-generated" label. The label names the model and the review date, and says to rely on the full text. The full extracted text follows.
+- **Document page:** the AI summary under a "Summary" heading with an "AI-generated" label. The label names the model and the review date, and says to rely on the full text.
+- **Official PDF:** below the summary, a PDF.js reader shows the court's own PDF with its original layout. The page loads it from `/api/v1/documents/<id>/pdf`, which fetches `https://fccp.gov.pk/api/public/site/files/<source_pdf_sha256>`, checks the bytes against that hash, and serves them with a one-day CDN cache. The extracted text sits under "Plain text version". If the PDF cannot be fetched, or is over 6 MB (Netlify's response limit), the page shows the extracted text instead.
+- **Which PDF:** `document_versions.source_pdf_sha256` records the file the text came from. Text extraction sets it, and migration 021 backfilled earlier text from `pdf_inspections`. Older versions keep an expired download token in `raw_metadata.download_url`; the reader does not use it.
 - **Search results:** the summary under each result, labelled "AI summary". A result without one shows the opening of the judgment text instead.
 - **Drafts:** unreviewed drafts are never public. `summary_drafts` has row-level security on and no policies.
 

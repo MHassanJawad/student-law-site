@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getPublicConfig } from "@/lib/config";
 import { getBrowserClient } from "@/lib/supabase";
+import { Loader } from "../loader";
+
+const LOADING = "Loading saved citations…";
 
 type Saved = { id: string; document_id: string; citation_snapshot: string; note: string | null; folder: string | null; created_at: string; updated_at: string };
 
@@ -12,7 +15,7 @@ type Saved = { id: string; document_id: string; citation_snapshot: string; note:
 export default function SavedPage() {
   const [items, setItems] = useState<Saved[]>([]);
   const [total, setTotal] = useState(0);
-  const [message, setMessage] = useState(getPublicConfig() ? "Loading saved citations…" : "Account service is not configured.");
+  const [message, setMessage] = useState(getPublicConfig() ? LOADING : "Account service is not configured.");
   const [token, setToken] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [folderFilter, setFolderFilter] = useState("");
@@ -112,7 +115,7 @@ export default function SavedPage() {
     <p className="eyebrow">PERSONAL LIBRARY</p>
     <h1>Saved citations</h1>
     <p className="intro">Keep research notes and folders with your references. Your library follows your account across sessions.</p>
-    <p aria-live="polite" className="status-line">{message}</p>
+    {message === LOADING ? <Loader label={LOADING} /> : <p aria-live="polite" className="status-line">{message}</p>}
     {!token && <Link className="button" href="/sign-in">Sign in</Link>}
     {token && <>
       <div className="library-toolbar">

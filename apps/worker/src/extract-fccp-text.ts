@@ -56,7 +56,8 @@ async function main(): Promise<void> {
         continue;
       }
       const { error } = await client.from("document_versions")
-        .update({ extracted_text: inspection.extractedText, text_kind: "extracted" }).eq("id", versionId);
+        .update({ extracted_text: inspection.extractedText, text_kind: "extracted", source_pdf_sha256: inspection.pdfSha256 })
+        .eq("id", versionId);
       if (error) throw error;
       counts.published += 1;
     } catch (error) {

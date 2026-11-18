@@ -13,7 +13,7 @@ export async function GET(_request: Request, context: RouteContext): Promise<Nex
   const client = createPublicClient();
   if (!client) return apiError(503, "NOT_CONFIGURED", "The research database is not configured.");
   const { data: doc, error } = await client.from("legal_documents")
-    .select("id,title,kind,canonical_url,current_version_id,source_registry(code,owner,attribution,jurisdiction),judgment_metadata(case_number,decision_date,author_judge,bench,raw_citation),legislation_metadata(jurisdiction,instrument_type,enactment_year,legal_status,official_citation),document_versions!document_versions_document_id_fkey(id,checked_at,extracted_text,text_kind,raw_metadata,parser_version,summary,summary_model,summary_reviewed_at)")
+    .select("id,title,kind,canonical_url,current_version_id,source_registry(code,owner,attribution,jurisdiction),judgment_metadata(case_number,decision_date,author_judge,bench,raw_citation),legislation_metadata(jurisdiction,instrument_type,enactment_year,legal_status,official_citation),document_versions!document_versions_document_id_fkey(id,checked_at,extracted_text,text_kind,raw_metadata,parser_version,summary,summary_model,summary_reviewed_at,source_pdf_sha256)")
     .eq("id", id).eq("publication_status", "published").maybeSingle();
   if (error) return apiError(503, "DOCUMENT_UNAVAILABLE", "Document lookup is temporarily unavailable.");
   if (!doc) return apiError(404, "RESOURCE_NOT_FOUND", "Document not found.");
@@ -40,6 +40,7 @@ export async function GET(_request: Request, context: RouteContext): Promise<Nex
     parserVersion: version.parser_version,
     text: version.extracted_text,
     textKind: version.text_kind,
+    pdfUrl: version.source_pdf_sha256 ? `/api/v1/documents/${doc.id}/pdf` : null,
     summary: version.summary, summaryModel: version.summary_model, summaryReviewedAt: version.summary_reviewed_at,
     source: { code: source?.code, name: source?.owner, attribution: source?.attribution, jurisdiction: source?.jurisdiction },
     metadata: { caseNumber: metadata?.case_number, authorJudge: metadata?.author_judge, bench: metadata?.bench,
