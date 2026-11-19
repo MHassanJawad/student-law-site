@@ -102,6 +102,20 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .field label{font-size:.88rem;font-weight:700}
 .field input,.field select{width:100%;min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4px;background:var(--surface);color:var(--text);font:inherit}
 .field input:focus,.field select:focus{border-color:var(--accent)}
+.field select{cursor:pointer;border-color:var(--border);border-radius:8px;box-shadow:0 1px 2px rgb(20 33 33 / 4%);accent-color:var(--accent)}
+.field select:hover{border-color:#8aa99e}
+.field select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+/* Keep the native picker on browsers without customizable select support. */
+@supports (appearance:base-select){
+  .field select,.field select::picker(select){appearance:base-select}
+  .field select{display:flex;align-items:center;gap:16px}
+  .field select::picker-icon{color:var(--accent)}
+  .field select::picker(select){margin-block:8px;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 28px rgb(20 33 33 / 12%);max-height:320px;overflow-y:auto}
+  .field select option{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:5px;color:var(--text);font:inherit;cursor:pointer}
+  .field select option:hover,.field select option:focus{background:#edf3ef;outline:none}
+  .field select option:checked{background:#e8f0ed;color:var(--accent);font-weight:700}
+  .field select option::checkmark{color:var(--accent);margin-inline-start:auto;order:1}
+}
 .filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .research-form-footer{border-top:1px solid var(--border);padding-top:18px;display:flex;justify-content:space-between;align-items:end;gap:16px}
 .research-form-footer .field{width:min(240px,50%)}
