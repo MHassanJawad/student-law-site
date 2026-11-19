@@ -5,7 +5,7 @@ import { CoverageSummary } from "./coverage-summary";
 /** Renders corpus scope and the research entry points. */
 export default function HomePage() {
   return (
-    <div className="page-wrap">
+    <div>
       <section className="hero">
         <p className="eyebrow">PAKISTANI LEGAL RESEARCH</p>
         <h1>Find the source.<br />Follow the law.</h1>
@@ -16,7 +16,7 @@ export default function HomePage() {
           <Link className="button button-secondary" href="/saved">Open saved citations</Link>
         </div>
       </section>
-      <section className="feature-grid" aria-label="Research collections">
+      <section className="page-wrap feature-grid" aria-label="Research collections">
         <article className="feature-card">
           <p className="eyebrow">FCCP JUDGMENTS</p>
           <h2>Case Law</h2>
