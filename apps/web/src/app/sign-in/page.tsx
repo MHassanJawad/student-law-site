@@ -35,7 +35,7 @@ export default function SignInPage() {
     else setMessage("Account created. Check your email if confirmation is required.");
   }
 
-  return <div className="page-wrap form-page">
+  return <div className="page-wrap form-page sign-in-page">
     <p className="eyebrow">YOUR RESEARCH LIBRARY</p>
     <h1>{mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create an account" : "Reset your password"}</h1>
     <p className="intro">Browsing is public. An account is only needed to save citations across sessions.</p>
@@ -47,8 +47,10 @@ export default function SignInPage() {
       <button type="submit" disabled={working}>{working ? "Please wait…" : mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create account" : "Send recovery link"}</button>
     </form>
     <p aria-live="polite" className="status-line">{message}</p>
+    <div className="account-help">
     {mode === "sign-in" && <button className="text-button" onClick={() => { setMode("sign-up"); setMessage(""); }}>Need an account? Create one</button>}
     {mode === "sign-in" && <button className="text-button" onClick={() => { setMode("recovery"); setMessage(""); }}>Forgot your password?</button>}
     {mode !== "sign-in" && <button className="text-button" onClick={() => { setMode("sign-in"); setMessage(""); }}>Back to sign in</button>}
+    </div>
   </div>;
 }

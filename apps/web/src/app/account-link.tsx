@@ -15,5 +15,5 @@ export function AccountLink() {
     const { data } = auth.onAuthStateChange((_event, session) => setSignedIn(Boolean(session)));
     return () => data.subscription.unsubscribe();
   }, []);
-  return signedIn ? <Link href="/account">Account</Link> : <Link href="/sign-in">Sign in</Link>;
+  return signedIn ? <Link className="account-link button" href="/account">Account</Link> : <Link className="account-link button" href="/sign-in">Sign in</Link>;
 }
