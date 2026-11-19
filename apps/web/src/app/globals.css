@@ -12,7 +12,8 @@ button:disabled{cursor:wait;opacity:.7}
 .skip-link:focus{top:12px}
 .site-header{background:var(--surface);border-bottom:1px solid var(--border)}
 .header-inner{max-width:1160px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
-.brand{font-family:Georgia,serif;font-size:1.38rem;font-weight:700;color:var(--text);text-decoration:none}
+.brand{display:inline-flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:1.38rem;font-weight:700;color:var(--text);text-decoration:none}
+.brand img{width:44px;height:44px;flex:none}
 .main-nav{display:flex;gap:8px 24px;flex-wrap:wrap}
 .main-nav a{font-size:.92rem;font-weight:700;text-decoration:none}
 .main-nav a:hover{text-decoration:underline}

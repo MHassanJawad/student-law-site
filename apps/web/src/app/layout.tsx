@@ -1,5 +1,6 @@
 // Root page shell and global site metadata.
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AccountLink } from "./account-link";
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <a className="skip-link" href="#main">Skip to content</a>
         <header className="site-header">
           <div className="header-inner">
-            <Link className="brand" href="/">Student Law Site</Link>
+            <Link className="brand" href="/"><Image src="/logo.png" alt="" width={44} height={44} />Student Law Site</Link>
             <nav aria-label="Main navigation" className="main-nav">
               <Link href="/">Home</Link>
               <Link href="/search?mode=case-law">Case Law</Link>
