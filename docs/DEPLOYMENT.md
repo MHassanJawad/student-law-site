@@ -42,6 +42,7 @@ The owner's ceiling is below PKR 10,000 per month. Prices change; check each pro
 3. **Configure Auth** in the Supabase dashboard:
    - Site URL: the web origin, such as `https://staging.example.org`. Redirect URLs: that origin and `<origin>/reset-password`.
    - Turn email confirmation **on**.
+   - Set the hosted Auth password policy to at least 8 characters, requiring uppercase and lowercase letters, digits, and symbols. The signup/reset forms validate these rules; the hosted provider must enforce them too for direct API requests. This dashboard setting is not changed by deploying the frontend.
    - Configure custom SMTP and send a test recovery email.
    - Review Auth rate limits for sign-in, sign-up, and recovery emails.
 4. **Load the reviewed corpus** with the corpus sync. From the operator machine with local Supabase running, run:
