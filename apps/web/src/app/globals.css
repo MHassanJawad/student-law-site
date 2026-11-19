@@ -12,7 +12,8 @@ button:disabled{cursor:wait;opacity:.7}
 .skip-link:focus{top:12px}
 .site-header{background:var(--surface);border-bottom:1px solid var(--border)}
 .header-inner{max-width:1160px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
-.brand{font-family:Georgia,serif;font-size:1.38rem;font-weight:700;color:var(--text);text-decoration:none}
+.brand{display:inline-flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:1.38rem;font-weight:700;color:var(--text);text-decoration:none}
+.brand img{width:44px;height:44px;flex:none}
 .main-nav{display:flex;gap:8px 24px;flex-wrap:wrap}
 .main-nav a{font-size:.92rem;font-weight:700;text-decoration:none}
 .main-nav a:hover{text-decoration:underline}
@@ -148,3 +149,24 @@ input{min-height:46px;padding:10px 13px;border:1px solid #8b9b95;border-radius:4
 .editorial-form textarea{font:inherit;padding:10px 13px;border:1px solid #8b9b95;border-radius:4px;resize:vertical}
 .account-danger{border-top:1px solid var(--border);margin-top:36px;padding-top:26px}
 @media(max-width:600px){.library-toolbar{grid-template-columns:1fr}.saved-row{display:block}.saved-controls{margin-top:16px}}
+/* Scales-of-justice loader and the official PDF reader. */
+.loader{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 16px;color:var(--muted);font-size:.95rem}
+.loader-page{min-height:55vh;justify-content:center}
+.loader svg{width:76px;height:76px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.loader-track{stroke:var(--border)}
+circle.loader-track{fill:var(--accent);stroke:none}
+.loader-trace{stroke:var(--accent);stroke-dasharray:26 74;animation:loader-trace 1.5s linear infinite}
+.loader-beam{transform-box:view-box;transform-origin:32px 17px;animation:loader-tilt 3s ease-in-out infinite}
+@keyframes loader-trace{to{stroke-dashoffset:-100}}
+@keyframes loader-tilt{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+@media(prefers-reduced-motion:reduce){.loader-trace,.loader-beam{animation:none}.loader-trace{stroke-dasharray:none}}
+.pdf-reader{border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-top:8px}
+.pdf-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#eef2f0;border-bottom:1px solid var(--border);font-size:.9rem}
+.pdf-toolbar button,.pdf-toolbar a{min-height:36px;min-width:36px;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.pdf-toolbar button:hover,.pdf-toolbar a:hover{border-color:var(--accent);color:var(--accent)}
+.pdf-toolbar .pdf-spacer{flex:1}
+.pdf-stage{position:relative;height:min(82vh,1100px);min-height:420px;background:#e4e8e6}
+.pdf-scroll{position:absolute;inset:0;overflow:auto}
+.pdf-scroll .pdfViewer .page{box-shadow:0 1px 4px rgba(20,33,33,.18);border:0;margin:12px auto}
+.pdf-stage .loader{position:absolute;inset:0;justify-content:center;background:#e4e8e6}
+.plain-text summary{cursor:pointer;font-weight:700;color:var(--accent);margin-top:18px}

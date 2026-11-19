@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { SearchMode } from "@/lib/research-query";
+import { Loader } from "../loader";
 
 type Hit = {
   id: string; kind: "judgment" | "legislation"; title: string; sourceUrl: string;
@@ -172,8 +173,9 @@ export function ResearchClient({ initialMode, initialSearch }: { initialMode: Se
           <div className="results-heading"><div><p className="eyebrow">RESULTS</p>
             <h2>{result ? `${result.total} matching ${result.total === 1 ? "record" : "records"}` : "Search results"}</h2></div>
             {covered !== undefined && <p className="meta">{covered} published in this collection</p>}</div>
-          <p className="meta" aria-live="polite">{message || (loading ? "Searching reviewed records…" : initialMode === "citation" && !result ? "Enter a citation to begin." : "")}</p>
-          {result?.items.map((hit) => <article className="research-hit" key={hit.id}>
+          <p className="meta" aria-live="polite">{message || (!loading && initialMode === "citation" && !result ? "Enter a citation to begin." : "")}</p>
+          {loading && <Loader label="Searching reviewed records…" />}
+          {!loading && result?.items.map((hit) => <article className="research-hit" key={hit.id}>
             <div className="hit-label"><span>{hit.kind === "judgment" ? "JUDGMENT" : "LEGISLATION"}</span><span>{hit.court ?? hit.jurisdiction ?? hit.sourceCode}</span>
               {hit.sourceCode.endsWith("_SAMPLE") && <span>LOCAL SAMPLE</span>}</div>
             <h3><Link href={`/documents/${hit.id}`}>{hit.title}</Link></h3>

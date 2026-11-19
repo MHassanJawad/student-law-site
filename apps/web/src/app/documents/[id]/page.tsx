@@ -3,14 +3,16 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase";
+import { Loader } from "../../loader";
+import { PdfReader } from "./pdf-reader";
 
 type Section = { key: string; heading: string; body: string; order: number };
 type Document = {
   id: string; kind: "judgment" | "legislation"; title: string; citation: string | null;
   date: string | null; sourceUrl: string; checkedAt: string; versionId: string;
-  text: string | null; textKind: "source" | "extracted" | "ocr" | "none";
+  text: string | null; pdfUrl: string | null; textKind: "source" | "extracted" | "ocr" | "none";
   summary: string | null; summaryModel: string | null; summaryReviewedAt: string | null;
   source: { code: string; name: string; attribution: string | null; jurisdiction: string };
   metadata: { authorJudge?: string; caseNumber?: string; bench?: string; jurisdiction?: string;
@@ -27,8 +29,10 @@ function formatDate(value: string | null | undefined) {
 export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<Document | null>(null);
-  const [status, setStatus] = useState("Loading document…");
+  const [status, setStatus] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
+  const [pdfFailed, setPdfFailed] = useState(false);
+  const showPlainText = useCallback(() => setPdfFailed(true), []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -60,7 +64,7 @@ export default function DocumentPage() {
   const judgment = document?.kind === "judgment";
   return <div className="page-wrap document-page">
     <Link className="back-link" href={`/search?mode=${judgment ? "case-law" : "statutes"}`}>&larr; Back to research</Link>
-    {status && <p role="status">{status}</p>}
+    {status ? <p role="status">{status}</p> : !document && <Loader label="Loading document…" page />}
     {document && <article className="document-article">
       <div className="document-kicker"><span>{judgment ? "JUDGMENT" : "LEGISLATION"}</span><span>{document.source?.name ?? "Reviewed source"}</span>
         {document.source?.code?.endsWith("_SAMPLE") && <span>LOCAL SAMPLE</span>}</div>
@@ -99,10 +103,17 @@ export default function DocumentPage() {
           </section>}
           <section className="text-panel document-section" id="document-text">
             <p className="eyebrow">CURRENT REVIEWED VERSION</p><h2>Document text</h2>
-            {document.textKind === "extracted" && <p className="meta">Text taken from the official PDF. Page layout and some formatting are lost; use the official source as the authoritative copy.</p>}
+            {document.pdfUrl && !pdfFailed ? <>
+              <p className="meta">The official PDF from the court, shown as published. Use the official source as the authoritative copy.</p>
+              <PdfReader url={document.pdfUrl} title={document.title} onFail={showPlainText} />
+              {document.text && <details className="plain-text"><summary>Plain text version</summary><p className="document-text">{document.text}</p></details>}
+            </> : <>
+            {pdfFailed && <p className="meta">The official PDF could not be loaded, so the text taken from it is shown instead.</p>}
+            {document.textKind === "extracted" && !pdfFailed && <p className="meta">Text taken from the official PDF. Page layout and some formatting are lost; use the official source as the authoritative copy.</p>}
             {document.sections.length > 0 ? <p>Navigate the reviewed sections using the contents list.</p>
               : document.text ? <p className="document-text">{document.text}</p>
                 : <p>This record currently contains reviewed metadata. Open the official source to read the document while its text is being prepared.</p>}
+            </>}
           </section>
           {document.sections.map((section) => <section className="text-panel document-section" key={section.key} id={`section-${section.key}`}>
             <h2>{section.heading}</h2><p className="document-text">{section.body}</p>
