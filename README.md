@@ -218,7 +218,7 @@ Every pull request runs the full CI gate in [`ci.yml`](.github/workflows/ci.yml)
 ## Current limits and roadmap
 
 - **Courts:** judgments come only from the FCCP for now. More courts will be added source by source, once each is reviewed.
-- **Search scope:** search matches case titles, case numbers and citations. Full-text search of judgments is planned.
+- **Search scope:** search matches the full text and summary of judgments that have extracted text. Scanned judgments are matched by title and case number until OCR exists.
 - **Scanned PDFs:** these need an OCR step, which doesn't exist yet. Until then they show metadata only.
 - **Legislation:** records carry metadata, and their legal status is marked unknown until verified.
 
