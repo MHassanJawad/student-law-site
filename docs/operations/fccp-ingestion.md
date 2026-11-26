@@ -58,5 +58,5 @@ Invalid single items are rejected and reported, and a run with rejected items do
 ## Known limits
 
 - **Scanned PDFs:** these need an OCR path, which does not exist yet.
-- **Search scope:** search still matches titles and case numbers only, not the judgment text.
+- **Search scope:** search matches titles, case numbers, approved summaries, and extracted text (migration 022). Judgments without extracted text match on title and case number only.
 - **Model trust:** summaries depend on the model's accuracy. Human review is the control, so read before approving.

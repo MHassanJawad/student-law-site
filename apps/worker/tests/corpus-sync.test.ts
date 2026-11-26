@@ -15,6 +15,7 @@ describe("corpus sync rules", () => {
       expect(CORPUS_TABLES).not.toHaveProperty(table);
     }
     expect(CORPUS_TABLES.legal_documents.columns).not.toContain("search_vector");
+    expect(CORPUS_TABLES.document_versions.columns).not.toContain("search_vector");
   });
 
   it("should split rows into bounded batches", () => {
