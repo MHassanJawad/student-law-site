@@ -52,6 +52,32 @@ describe("verifyAnswer", () => {
     const s = [src(1, "The court ruled.", "Ali v State (C.A. 12 of 2023)")];
     expect(verifyAnswer("ANSWER: In CA No. 12/2023 the court ruled [S1].", s).ok).toBe(true);
   });
+  it("compares whole case numbers, not fragments", () => {
+    const s = [src(1, "Decided in C.P.L.A. No. 1234 of 2020 last year.")];
+    for (const c of ["CPLA 12", "C.P.L.A. No. 1", "CPLA No. 123", "CPLA 1234 of 2021"]) {
+      expect(verifyAnswer(`ANSWER: See ${c} [S1].`, s).problems).toEqual(["unsupported_case_reference"]);
+    }
+    expect(verifyAnswer("ANSWER: See CPLA 1234/2020 [S1].", s).ok).toBe(true);
+  });
+  it("does not find a case number across word boundaries", () => {
+    const s = [src(1, "The trip ended in Jamaica 7 of 2018 records.")];
+    expect(verifyAnswer("ANSWER: See CA 7 of 2018 [S1].", s).problems).toEqual(["unsupported_case_reference"]);
+  });
+  it("accepts a yearless case number that matches a source number", () => {
+    const s = [src(1, "This order decides CPLA No.544-P/2025 on its merits.")];
+    expect(verifyAnswer("ANSWER: In CPLA 544-P the court ruled [S1].", s).ok).toBe(true);
+    expect(verifyAnswer("ANSWER: In CPLA 54 the court ruled [S1].", s).ok).toBe(false);
+  });
+  it("does not let a split number and year pose as a yearless number", () => {
+    const s = [src(1, "Listed as CPLA 12345 only.")];
+    expect(verifyAnswer("ANSWER: In CPLA 1/2345 [S1].", s).ok).toBe(false);
+    expect(verifyAnswer("ANSWER: In CPLA 12345 [S1].", s).ok).toBe(true);
+  });
+  it("rejects citation forms it cannot parse", () => {
+    for (const bad of ["[s9]", "[S1-S3]", "[S1–S9]", "【S1】"]) {
+      expect(verifyAnswer(`ANSWER: Risk allowance is limited ${bad} [S2].`, two)).toMatchObject({ ok: false, problems: ["unknown_citation"] });
+    }
+  });
   it("allows NOT_FOUND without citations", () => {
     expect(verifyAnswer("NOT_FOUND: The sources do not cover this.", two)).toMatchObject({ ok: true, outcome: "not_found", text: "The sources do not cover this.", cited: [] });
   });
