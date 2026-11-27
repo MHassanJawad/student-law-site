@@ -14,6 +14,10 @@ describe("API rate limit rules", () => {
     expect(rateRuleFor("/api/v1/search/research", "GET")).toMatchObject({ bucket: "search", limit: 120 });
     expect(rateRuleFor("/api/v1/documents/abc", "GET")).toMatchObject({ bucket: "read", limit: 240 });
   });
+
+  it("limits the assistant to ten requests a minute", () => {
+    expect(rateRuleFor("/api/v1/assistant", "POST")).toEqual({ bucket: "assistant", limit: 10, windowMs: 60_000 });
+  });
 });
 
 describe("fixed-window rate limiter", () => {
