@@ -78,6 +78,12 @@ describe("verifyAnswer", () => {
       expect(verifyAnswer(`ANSWER: Risk allowance is limited ${bad} [S2].`, two)).toMatchObject({ ok: false, problems: ["unknown_citation"] });
     }
   });
+  it("leaves parenthesised statutory references alone", () => {
+    for (const ref of ["(s 12)", "(S2)", "(s. 5)", "（S3）"]) {
+      expect(verifyAnswer(`ANSWER: Risk allowance under the Act ${ref} is limited [S2].`, two).ok).toBe(true);
+    }
+    expect(verifyAnswer("ANSWER: Limited ［S1］ [S2].", two).problems).toEqual(["unknown_citation"]);
+  });
   it("allows NOT_FOUND without citations", () => {
     expect(verifyAnswer("NOT_FOUND: The sources do not cover this.", two)).toMatchObject({ ok: true, outcome: "not_found", text: "The sources do not cover this.", cited: [] });
   });

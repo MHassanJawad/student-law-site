@@ -20,8 +20,9 @@ const caseKey = (s: string) => s.toLowerCase().replace(/\b(?:no|of|and)\b/g, "")
 const YEAR = /(?:\s+of\s+|\s*[/-]\s*)\d{4}$/i;
 // Yearless numbers get a "#" so "CPLA 12345" can never equal "CPLA 1/2345".
 const caseId = (c: string) => (YEAR.test(c) ? caseKey(c) : `${caseKey(c)}#`);
-// A bracketed "S<digit>" left once valid groups are removed: "[s9]", "[S1-S3]", "【S1】", "(S2)".
-const STRAY_CITATION = /[[【(（]\s*S\s*\d/i;
+// A square-bracketed "S<digit>" left once valid groups are removed: "[s9]", "[S1-S3]", "【S1】".
+// Parentheses are excluded: "(s 12)" is an ordinary statutory section reference.
+const STRAY_CITATION = /[[［【]\s*S\s*\d/i;
 
 export function verifyAnswer(raw: string, sources: Source[]): VerifiedAnswer {
   const problems = new Set<Problem>();
