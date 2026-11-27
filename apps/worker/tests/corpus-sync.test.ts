@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertSyncTarget, chunk, CORPUS_TABLES } from "../src/corpus-sync.js";
+import { assertSyncTarget, chunk, CORPUS_TABLES, orderColumns } from "../src/corpus-sync.js";
 
 describe("corpus sync rules", () => {
   it("should accept only an HTTPS hosted target unless the CI local check is explicit", () => {
@@ -21,5 +21,21 @@ describe("corpus sync rules", () => {
   it("should split rows into bounded batches", () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
     expect(chunk([], 2)).toEqual([]);
+  });
+
+  it("should sync document chunks without the generated search column", () => {
+    expect(CORPUS_TABLES.document_chunks.columns).toContain("body");
+    expect(CORPUS_TABLES.document_chunks.columns).not.toContain("search_vector");
+    expect(CORPUS_TABLES.document_chunks.key).toBe("version_id,chunker_version,ordinal");
+  });
+
+  it("should order chunks after document versions", () => {
+    const tables = Object.keys(CORPUS_TABLES);
+    expect(tables.indexOf("document_chunks")).toBeGreaterThan(tables.indexOf("document_versions"));
+  });
+
+  it("should page by every key column", () => {
+    expect(orderColumns("version_id,chunker_version,ordinal")).toEqual(["version_id", "chunker_version", "ordinal"]);
+    expect(orderColumns("id")).toEqual(["id"]);
   });
 });
