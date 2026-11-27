@@ -48,6 +48,7 @@ node scripts/check-phase5-local.mjs
 node scripts/ci-ingestion-failure.mjs
 node scripts/ci-legislation-sync.mjs
 node scripts/ci-full-text-search.mjs
+node scripts/ci-assistant-retrieve.mjs
 node scripts/ci-search-latency.mjs
 export CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
 node scripts/ci-accessibility.mjs
