@@ -26,7 +26,7 @@ const planSchema = z.object({
 });
 
 // Series prefix: letters with optional dots/spaces between them, e.g. "C.P.L.A", "CPLA", "F.C.R.P".
-const series = (letters: string) => letters.split("").join("\.?\s?");
+const series = (letters: string) => letters.split("").join(String.raw`\.?\s?`);
 const PREFIX = [
   String.raw`(?:F\.?\s?)?${series("CPLA")}`, String.raw`(?:F\.?\s?)?${series("CRP")}`, series("CMA"), series("CA"), series("CP"), series("SMC"),
   "Civil Appeals?", "Constitution Petitions?",
@@ -75,6 +75,8 @@ export async function planQuestion(
   } catch {
     return fallbackPlan(question);
   }
-  const queries = parsed.search_queries.map((q) => q.trim()).filter((q) => q && q.length <= MAX_QUERY_LENGTH).slice(0, MAX_SEARCH_QUERIES);
+  const queries = parsed.search_queries.map((q) => q.trim()).filter(Boolean).map((q) => q.slice(0, MAX_QUERY_LENGTH).trim()).slice(0, MAX_SEARCH_QUERIES);
+  // A searchable intent must never search nothing: fall back to the raw question.
+  if (!queries.length && (parsed.intent === "legal_question" || parsed.intent === "case_lookup")) queries.push(question.slice(0, MAX_QUERY_LENGTH));
   return { intent: parsed.intent, searchQueries: withCaseNumbers(question, queries), clarification: parsed.clarification?.trim() || null };
 }

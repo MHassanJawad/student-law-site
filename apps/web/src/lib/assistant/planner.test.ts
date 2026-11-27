@@ -53,9 +53,18 @@ describe("planQuestion", () => {
     expect(p.searchQueries.filter((q) => q === "CPLA 3119/2023")).toHaveLength(1);
   });
 
-  it("drops blank and over-long queries", async () => {
+  it("drops blank queries and truncates over-long ones", async () => {
     reply(plan(["  ", "ok", "x".repeat(201), "y".repeat(200)]));
-    expect((await run("q")).searchQueries).toEqual(["ok", "y".repeat(200)]);
+    expect((await run("q")).searchQueries).toEqual(["ok", "x".repeat(200), "y".repeat(200)]);
+  });
+
+  it("falls back to the question when a searchable intent has no queries", async () => {
+    for (const queries of [[], ["  "]]) {
+      reply(plan(queries));
+      expect((await run("what is bail?")).searchQueries).toEqual(["what is bail?"]);
+    }
+    reply(plan([], { intent: "greeting" }));
+    expect((await run("hello")).searchQueries).toEqual([]);
   });
 
   it("propagates rate limiting and other non-bad_response errors", async () => {
@@ -87,6 +96,6 @@ describe("extractCaseNumbers", () => {
   });
 
   it("ignores ordinary text", () => {
-    expect(extractCaseNumbers("Article 25 of the Constitution, section 3 of 2017 Act, decided on 10.04.2025, USCA 12 of 2020, CA is a state")).toEqual([]);
+    expect(extractCaseNumbers("Article 25 of the Constitution, section 3 of 2017 Act, decided on 10.04.2025, USCA 12 of 2020, CA is a state, CAP 12 of 2020, CSA 5 of 2020, CPA 12, CxPxLxA 5")).toEqual([]);
   });
 });
