@@ -1,4 +1,4 @@
-// Split the extracted text of each published judgment into citable passages. Local database only; reruns add nothing.
+// Split the extracted text of each published judgment into citable passages. Local database only; a rerun completes partly built versions and otherwise adds nothing.
 import { createClient } from "@supabase/supabase-js";
 import { CHUNKER_VERSION, chunkText } from "./chunking.js";
 
@@ -14,21 +14,23 @@ async function main(): Promise<void> {
     .select("id,current_version_id,document_versions!document_versions_document_id_fkey(id,text_kind,extracted_text)")
     .eq("publication_status", "published").limit(5000);
   if (error) throw error;
-  const { data: done, error: doneError } = await client.from("document_chunks")
-    .select("version_id").eq("chunker_version", CHUNKER_VERSION).eq("ordinal", 0).limit(5000);
-  if (doneError) throw doneError;
-  const built = new Set((done ?? []).map((row) => row.version_id));
   let versions = 0;
   let chunks = 0;
   for (const doc of documents ?? []) {
     const version = doc.document_versions.find((item) => item.id === doc.current_version_id);
-    if (version?.text_kind !== "extracted" || !version.extracted_text || built.has(version.id)) continue;
+    if (version?.text_kind !== "extracted" || !version.extracted_text) continue;
     const rows = chunkText(version.extracted_text).map((part) => ({
       version_id: version.id, chunker_version: CHUNKER_VERSION, ordinal: part.ordinal, document_id: doc.id,
       body: part.body, char_start: part.charStart, char_end: part.charEnd, paragraph_label: part.paragraphLabel,
     }));
+    // A count mismatch means an earlier run died mid-version; upsert completes it without touching other chunker versions.
+    const { count, error: countError } = await client.from("document_chunks")
+      .select("ordinal", { count: "exact", head: true }).eq("version_id", version.id).eq("chunker_version", CHUNKER_VERSION);
+    if (countError) throw countError;
+    if (count === rows.length) continue;
     for (let start = 0; start < rows.length; start += 200) {
-      const { error: insertError } = await client.from("document_chunks").insert(rows.slice(start, start + 200));
+      const { error: insertError } = await client.from("document_chunks")
+        .upsert(rows.slice(start, start + 200), { onConflict: "version_id,chunker_version,ordinal" });
       if (insertError) throw insertError;
     }
     versions += 1;
