@@ -28,15 +28,15 @@ async function main(): Promise<void> {
       .select("ordinal", { count: "exact", head: true }).eq("version_id", version.id).eq("chunker_version", CHUNKER_VERSION);
     if (countError) throw countError;
     if (count === rows.length) continue;
-    // Drop stale tail rows left by an earlier, longer chunking of this version.
-    const { error: trimError } = await client.from("document_chunks").delete()
-      .eq("version_id", version.id).eq("chunker_version", CHUNKER_VERSION).gte("ordinal", rows.length);
-    if (trimError) throw trimError;
     for (let start = 0; start < rows.length; start += 200) {
       const { error: insertError } = await client.from("document_chunks")
         .upsert(rows.slice(start, start + 200), { onConflict: "version_id,chunker_version,ordinal" });
       if (insertError) throw insertError;
     }
+    // Trim the stale tail last: the stored count stays above rows.length until every row is rewritten, so a failure is retried.
+    const { error: trimError } = await client.from("document_chunks").delete()
+      .eq("version_id", version.id).eq("chunker_version", CHUNKER_VERSION).gte("ordinal", rows.length);
+    if (trimError) throw trimError;
     versions += 1;
     chunks += rows.length;
   }
