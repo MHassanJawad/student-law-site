@@ -26,7 +26,7 @@ as $$
     join public.document_chunks c on c.version_id = h.version_id and c.chunker_version = 'chunks-v1'
       and c.ordinal = h.ordinal
     join public.legal_documents d on d.id = c.document_id and d.current_version_id = c.version_id
-      and d.publication_status = 'published'
+      and d.publication_status = 'published' and d.kind = 'judgment'
     join public.document_versions v on v.id = c.version_id and v.review_status = 'approved'
     join public.source_registry s on s.id = d.source_id and s.access_status in ('approved', 'fixture_only')
     left join public.judgment_metadata j on j.document_id = d.id
