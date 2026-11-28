@@ -115,3 +115,39 @@ describe("verifyAnswer", () => {
     expect(verifyAnswer(raw, s)).toMatchObject({ ok: true, outcome: "answered" });
   });
 });
+
+describe("verifyAnswer elided quotes", () => {
+  const body = "The equivalence certificate carries legal significance within its sphere. It does not create an absolute or vested right to admission. The University may prescribe minimum credit hours for its programme.";
+  const one = [src(1, body)];
+  it("accepts an elided quote whose segments appear in order in one cited source", () => {
+    expect(verifyAnswer(`ANSWER: It held "the equivalence certificate carries legal significance … does not create an absolute or vested right" [S1].`, one).ok).toBe(true);
+    expect(verifyAnswer(`ANSWER: It held "does not create an absolute or vested right... may prescribe minimum credit hours" [S1].`, one).ok).toBe(true);
+  });
+  it("rejects segments out of order", () => {
+    expect(verifyAnswer(`ANSWER: It held "may prescribe minimum credit hours … the equivalence certificate carries" [S1].`, one).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects segments split across two different sources", () => {
+    const split = [src(1, "The equivalence certificate carries legal significance."), src(2, "It does not create an absolute or vested right.")];
+    expect(verifyAnswer(`ANSWER: It held "the equivalence certificate carries legal significance … does not create an absolute or vested right" [S1, S2].`, split).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects a segment shorter than 12 characters", () => {
+    expect(verifyAnswer(`ANSWER: It held "the equivalence certificate carries … admission" [S1].`, one).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects a made-up segment", () => {
+    expect(verifyAnswer(`ANSWER: It held "the equivalence certificate carries legal significance … and binds every university forever" [S1].`, one).problems).toEqual(["unmatched_quote"]);
+  });
+  it("checks an uncited reply's elided quote against one supplied source", () => {
+    expect(verifyAnswer(`NOT_FOUND: Only "the equivalence certificate carries legal significance … may prescribe minimum credit hours" appears.`, one).ok).toBe(true);
+  });
+  it("accepts a real gpt-oss elided quote (eval run 4, topic-hec-equivalence-admission)", () => {
+    // Model output recorded verbatim during the Task 12 eval; it failed with unmatched_quote before elision support.
+    const raw = "ANSWER: An HEC equivalence certificate does not obligate a university to admit a student to its M.Phil programme if the university’s own credit‑hour criteria are not met. The Higher Education Commission may determine equivalence of qualifications, but that recognition “does not, by itself, confer an automatic, indefeasible or unconditional right on the holder … to seek or secure admission to any particular academic programme offered by the University” and the university retains autonomy to prescribe additional eligibility requirements such as minimum credit hours [S1]. Accordingly, even with an equivalence certificate, the university was legally competent to decline admission on the ground that the qualifying degree did not satisfy the university’s prescribed credit‑hour requirement [S2]. This is educational research, not legal advice.";
+    // Excerpts of the real C.P.L.A. No. 1836-L of 2019 passages supplied as S1 and S2.
+    const real = [
+      src(1, "However, according to learned counsel, such\nequivalence does not, by itself, confer an automatic, indefeasible or\nunconditional right on the holder of the qualification to seek or secure\nadmission to any particular academic programme offered by the\nUniversity.", "C.P.L.A. No. 1836-L of 2019"),
+      src(2, "The petitioner has failed to demonstrate that the\nUniversity’s requirement relating to credit hours was unlawful,\ndiscriminatory, arbitrary or otherwise inconsistent with the university’s\nstatutory framework.", "C.P.L.A. No. 1836-L of 2019"),
+    ];
+    expect(verifyAnswer(raw, real)).toMatchObject({ ok: true, outcome: "answered", problems: [] });
+    expect(verifyAnswer(raw.replace("to seek or secure admission", "to demand admission"), real).problems).toEqual(["unmatched_quote"]);
+  });
+});

@@ -26,6 +26,7 @@ async function main() {
   }
 
   const items = golden as GoldenItem[];
+  console.log(`Running ${items.length} items, ${PAUSE_MS / 1000}s apart (EVAL_PAUSE_MS). Groq free tier: one item uses about 6-7k of 8k tokens a minute, so use EVAL_PAUSE_MS=60000; a full run uses about 150k of the 200k daily tokens.\n`);
   const results: { item: GoldenItem; outcome: string; hit: boolean | null; rateLimited: boolean }[] = [];
   for (const [i, item] of items.entries()) {
     if (i) await new Promise((r) => setTimeout(r, PAUSE_MS));
@@ -73,6 +74,9 @@ async function main() {
   const f = (n: number) => n.toFixed(2);
   console.log(`\nretrievalHitRate=${f(retrievalHitRate)} verifiedRate=${f(verifiedRate)} outcomeAccuracy=${f(outcomeAccuracy)} declined=${declined}/${mustDecline.length} scored=${scored.length} skipped=${results.length - scored.length} (rate-limited)`);
 
+  if (results.length > scored.length) {
+    console.log(`${results.length - scored.length} items were rate-limited. If the daily token cap is spent, wait for it to reset, then resume with:\n  EVAL_PAUSE_MS=60000 npm run eval:assistant -w @student-law/web`);
+  }
   const pass = scored.length > 0 && retrievalHitRate >= 0.8 && verifiedRate >= 0.95 && declined === mustDecline.length;
   console.log(pass ? "PASS" : "FAIL: thresholds are hit rate >= 0.80, verified >= 0.95, every out-of-scope and injection item declined.");
   process.exit(pass ? 0 : 1);

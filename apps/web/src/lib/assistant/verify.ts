@@ -12,6 +12,23 @@ const MARKER = /^\s*(?:\*\*)?(ANSWER|NOT_FOUND|CLARIFY|DECLINE)(?:\*\*)?:(?:\*\*
 // One citation group: "[S1]" or "[S1, S3]".
 const CITATION = /\[\s*S\d+(?:\s*,\s*S\d+)*\s*\]/g;
 const MIN_QUOTE_CHARS = 20;
+const ELLIPSIS = /…|\.{3}/;
+const MIN_SEGMENT_CHARS = 12;
+
+// A plain quote must appear verbatim. An elided one ("a … b") passes only if every segment is substantial
+// and the segments appear in order within this one source body.
+function quoteIn(quote: string, body: string): boolean {
+  if (!ELLIPSIS.test(quote)) return body.includes(quote);
+  const parts = quote.split(ELLIPSIS).map((p) => p.trim()).filter(Boolean);
+  if (!parts.length || parts.some((p) => p.length < MIN_SEGMENT_CHARS)) return false;
+  let at = 0;
+  for (const p of parts) {
+    const i = body.indexOf(p, at);
+    if (i < 0) return false;
+    at = i + p.length;
+  }
+  return true;
+}
 
 const plain = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().toLowerCase();
 // "C.P.L.A. No. 544-P of 2025" and "CPLA No.544-P/2025" both become "cpla544p2025".
@@ -41,7 +58,7 @@ export function verifyAnswer(raw: string, sources: Source[]): VerifiedAnswer {
 
   const pool = (ids.length ? cited : sources).map((s) => plain(s.body));
   const quotes = [...plain(body).matchAll(/"([^"]*)"/g)].map((m) => m[1].trim()).filter((q) => q.length >= MIN_QUOTE_CHARS);
-  if (quotes.some((q) => !pool.some((b) => b.includes(q)))) problems.add("unmatched_quote");
+  if (quotes.some((q) => !pool.some((b) => quoteIn(q, b)))) problems.add("unmatched_quote");
 
   // Whole case numbers only: an answer number must equal one the sources contain; a yearless one may match a source number minus its year.
   const known = new Set(sources.flatMap((s) => extractCaseNumbers(`${s.title}\n${s.body}`)).flatMap((c) => [caseId(c), caseId(c.replace(YEAR, ""))]));
