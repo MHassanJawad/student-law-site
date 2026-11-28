@@ -28,6 +28,7 @@ describe("link guards", () => {
   });
   it("allows only site-relative paths", () => {
     expect(safeSitePath("//evil.com")).toBeNull();
+    expect(safeSitePath("/\\evil.com")).toBeNull();
     expect(safeSitePath("javascript:alert(1)")).toBeNull();
     expect(safeSitePath("/documents/abc")).toBe("/documents/abc");
   });
@@ -38,6 +39,10 @@ describe("buildHistory", () => {
   it("strips markers and skips non-answered turns", () => {
     expect(buildHistory([t("a", "answered", "Yes [1][2] it is [3]."), t("b", "not_found", "x"), t("c", "unverified", "y"), t("d")]))
       .toEqual([{ role: "user", content: "a" }, { role: "assistant", content: "Yes it is." }]);
+  });
+  it("cuts each message to the server's 4,000-character limit", () => {
+    const h = buildHistory([t("q", "answered", "a".repeat(9000))]);
+    expect(h.map((m) => m.content.length)).toEqual([1, 4000]);
   });
   it("keeps the most recent 8 messages", () => {
     const turns = Array.from({ length: 6 }, (_, i) => t(`q${i}`, "answered", `a${i}`));

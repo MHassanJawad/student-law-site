@@ -46,6 +46,31 @@ describe("handleAssistantRequest", () => {
     }
   });
 
+  it("truncates over-long history items instead of rejecting them", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    const d = deps();
+    const r = await handleAssistantRequest(req({ question: "follow-up", history: [{ role: "assistant", content: "a".repeat(6000) }] }), d);
+    expect(r.status).toBe(200);
+    expect(d.run).toHaveBeenCalledWith({ question: "follow-up", history: [{ role: "assistant", content: "a".repeat(4000) }] }, expect.anything(), expect.any(Function), expect.any(AbortSignal));
+  });
+
+  it("rejects a body over 64 KB by content-length or by the text read", async () => {
+    const big = { question: "q", history: [{ role: "user", content: "x".repeat(70_000) }] };
+    const noLength = new Request("http://localhost/api/v1/assistant", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(JSON.stringify(big))); c.close(); } }),
+      duplex: "half",
+    } as RequestInit);
+    expect(noLength.headers.get("content-length")).toBeNull();
+    for (const r of [req({ question: "q" }, { "content-length": "70000" }), noLength]) {
+      const d = deps();
+      const res = await handleAssistantRequest(r, d);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.code).toBe("INVALID_QUESTION");
+      expect(d.consumeQuota).not.toHaveBeenCalled();
+    }
+  });
+
   it("returns 429 with the quota reason", async () => {
     const r = await handleAssistantRequest(req({ question: "q" }), deps({ consumeQuota: async () => ({ allowed: false, reason: "global", remaining: 0, chargeId: null }) }));
     expect(r.status).toBe(429);

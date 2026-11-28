@@ -17,15 +17,25 @@ export type HandlerDeps = {
 
 const BODY_SCHEMA = z.object({
   question: z.string().trim().min(1).max(1000),
-  history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(4000) })).max(8).default([]),
+  // Over-long history items are cut, not rejected: a follow-up must not fail because an earlier answer was long.
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().transform((s) => s.slice(0, 4000)) })).max(8).default([]),
 });
+const MAX_BODY_BYTES = 64 * 1024;
+
+// Reads the JSON body, or null when it is malformed or larger than 64 KB (by header, or by the text read).
+async function readBody(request: Request): Promise<unknown> {
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) return null;
+  const text = await request.text().catch(() => "");
+  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return null;
+  try { return JSON.parse(text); } catch { return null; }
+}
 
 export async function handleAssistantRequest(request: Request, deps: HandlerDeps): Promise<Response> {
   const { config } = deps;
   if (!config) return apiError(503, "ASSISTANT_DISABLED", "The research assistant is not available.");
   if (!hasTrustedOrigin(request)) return apiError(403, "ORIGIN_DENIED", "Request origin is not allowed.");
   if (!(await deps.verifyUser(request))) return apiError(401, "AUTH_REQUIRED", "Sign in to use the research assistant.");
-  const body = BODY_SCHEMA.safeParse(await request.json().catch(() => null));
+  const body = BODY_SCHEMA.safeParse(await readBody(request));
   if (!body.success) return apiError(400, "INVALID_QUESTION", "Ask a question of 1 to 1,000 characters.");
 
   let quota: Awaited<ReturnType<HandlerDeps["consumeQuota"]>>;

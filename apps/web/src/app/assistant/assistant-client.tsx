@@ -29,7 +29,7 @@ function References({ turn, citations }: { turn: number; citations: Citation[] }
 
 function Related({ items }: { items: RelatedRecord[] }) {
   if (!items.length) return null;
-  return <><p className="meta">Related records on this site:</p><ul>{items.map((r) => <li key={r.path}><Link href={r.path}>{r.title}</Link></li>)}</ul></>;
+  return <><p className="meta">Related records on this site:</p><ul>{items.map((r) => { const path = safeSitePath(r.path); return <li key={r.path}>{path ? <Link href={path}>{r.title}</Link> : r.title}</li>; })}</ul></>;
 }
 
 /** The assistant thread, input and streamed progress. */
@@ -82,6 +82,7 @@ export function AssistantClient() {
         const code = err?.error?.code;
         patch(id, {
           error: code === "ASSISTANT_DISABLED" ? "The assistant is switched off."
+            : response.status === 429 && code !== "QUOTA_EXCEEDED" ? "Too many requests. Wait a moment, then try again."
             : response.status === 429 ? (err?.error?.reason === "global" ? "The assistant has reached today's limit for everyone. Try again tomorrow." : "You've reached today's limit of questions. Try again tomorrow.")
             : response.status === 400 ? "Ask a question of 1 to 1,000 characters." : "The assistant is temporarily unavailable.",
           retry: code === "ASSISTANT_UNAVAILABLE",
