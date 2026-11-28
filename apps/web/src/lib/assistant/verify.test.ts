@@ -73,6 +73,24 @@ describe("verifyAnswer", () => {
     expect(verifyAnswer("ANSWER: In CPLA 1/2345 [S1].", s).ok).toBe(false);
     expect(verifyAnswer("ANSWER: In CPLA 12345 [S1].", s).ok).toBe(true);
   });
+  it("rejects law-report citations absent from the sources (final review probe)", () => {
+    const s = [src(1, "We hold that the limitation rule doesn't apply to minors in any case.")];
+    expect(verifyAnswer("ANSWER: Held in PLD 2019 SC 123 and 2021 SCMR 456 that limitation applies [S1].", s).problems).toEqual(["unsupported_case_reference"]);
+    expect(verifyAnswer("ANSWER: Held in PLD 2019 SC 123 [S1].", s).problems).toEqual(["unsupported_case_reference"]);
+    expect(verifyAnswer("ANSWER: Held in 2021 SCMR 456 [S1].", s).problems).toEqual(["unsupported_case_reference"]);
+  });
+  it("accepts a law-report citation present in a source, across spacing and dot variants", () => {
+    const s = [src(1, "Reliance was placed on PLD 2019 SC 123, 2021 SCMR 456, 2018 P.Cr.L.J 789 and 2020 PLC (C.S.) 45.")];
+    for (const c of ["PLD 2019 SC 123", "P.L.D. 2019 SC 123", "2021 SCMR 456", "2018 PCrLJ 789", "2018 PCr.LJ 789", "2020 PLC (C.S.) 45"]) {
+      expect(verifyAnswer(`ANSWER: See ${c} [S1].`, s).ok).toBe(true);
+    }
+    for (const c of ["PLD 2019 SC 12", "PLD 2019 SC 1234", "PLD 2019 Lah 123", "2021 SCMR 4567", "2022 SCMR 456", "2018 YLR 789", "2020 PLC 45"]) {
+      expect(verifyAnswer(`ANSWER: See ${c} [S1].`, s).problems).toEqual(["unsupported_case_reference"]);
+    }
+  });
+  it("does not read ordinary text with years as a law-report citation", () => {
+    expect(verifyAnswer("ANSWER: In 2019 the court decided 123 appeals, and by 2021 some 456 more [S1].", two).ok).toBe(true);
+  });
   it("rejects citation forms it cannot parse", () => {
     for (const bad of ["[s9]", "[S1-S3]", "[S1–S9]", "【S1】"]) {
       expect(verifyAnswer(`ANSWER: Risk allowance is limited ${bad} [S2].`, two)).toMatchObject({ ok: false, problems: ["unknown_citation"] });
@@ -156,6 +174,22 @@ describe("verifyAnswer elided quotes", () => {
       const s = [src(1, `The first segment here is long ${neg} and the second segment here is long.`)];
       expect(verifyAnswer(`ANSWER: "the first segment here is long … the second segment here is long" [S1].`, s).problems).toEqual(["unmatched_quote"]);
     }
+  });
+  it("rejects an elision that cuts a contraction to flip a negation (final review probe)", () => {
+    const s = [src(1, "We hold that the limitation rule doesn't apply to minors in any case.")];
+    expect(verifyAnswer(`ANSWER: The court said "the limitation rule does … apply to minors in any case" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    expect(verifyAnswer(`ANSWER: The court said "the limitation rule doesn … apply to minors in any case" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects a segment that ends mid-word to drop a negation (review probe)", () => {
+    const s = [src(1, "On the evidence, the accused person is not guilty of the offence charged.")];
+    expect(verifyAnswer(`ANSWER: It found "the accused person is no … guilty of the offence charged" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    expect(verifyAnswer(`ANSWER: It found "the accused person is no" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+  });
+  it("requires each segment to start and end on a word boundary", () => {
+    const s = [src(1, "The Commission, acting under its statute, may determine the equivalence of academic qualifications.")];
+    expect(verifyAnswer(`ANSWER: It says "he Commission, acting … may determine the equivalence" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    expect(verifyAnswer(`ANSWER: It says "the Commission, acting … may determine the equivalen" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    expect(verifyAnswer(`ANSWER: It says "the Commission, acting … may determine the equivalence" [S1].`, s).ok).toBe(true);
   });
   it("rejects a quote with three segments", () => {
     expect(verifyAnswer(`ANSWER: "the equivalence certificate carries … an absolute or vested right … minimum credit hours for" [S1].`, one).problems).toEqual(["unmatched_quote"]);

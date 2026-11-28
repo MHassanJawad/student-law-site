@@ -43,6 +43,19 @@ export function extractCaseNumbers(text: string): string[] {
   return [...new Set(text.match(CASE_NUMBER) ?? [])];
 }
 
+// Law reports: "PLD 2019 SC 123" (court after the year) and "<year> <reporter> <page>" for the other series,
+// each with an optional "(court)" qualifier before the page, e.g. "2020 PLC (C.S.) 45".
+const QUALIFIER = String.raw`(?:\s*\([A-Za-z.&\s]{1,20}\))?`;
+const REPORTERS = ["SCMR", "CLC", "YLR", "MLD", "PLC", "PCrLJ", "PTD", "CLD"].map(series).join("|");
+const REPORT_CITATION = new RegExp(
+  String.raw`(?<![A-Za-z0-9])(?:${series("PLD")}\.?\s*\d{4}\s+[A-Z][A-Za-z.&]*|\d{4}\s+(?:${REPORTERS})\.?)${QUALIFIER}\s+\d+(?!\d)`,
+  "g",
+);
+
+export function extractReportCitations(text: string): string[] {
+  return [...new Set(text.match(REPORT_CITATION) ?? [])];
+}
+
 function withCaseNumbers(question: string, queries: string[]): string[] {
   const lower = queries.map((q) => q.toLowerCase());
   const extra = extractCaseNumbers(question)

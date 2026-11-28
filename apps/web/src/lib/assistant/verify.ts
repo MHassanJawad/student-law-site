@@ -1,5 +1,5 @@
 // Server-only: code, not the model, decides whether an answer may be shown. Fails closed. Never logs answer text.
-import { extractCaseNumbers } from "./planner";
+import { extractCaseNumbers, extractReportCitations } from "./planner";
 import type { Source } from "./sources";
 
 export type Outcome = "answered" | "not_found" | "clarify" | "declined";
@@ -18,21 +18,34 @@ const MAX_ELIDED_CHARS = 150;
 // An ellipsis must not hide a negation, or "is not guilty" could be quoted as "is … guilty".
 const NEGATION = /\b(?:not|no|never|neither|nor|without|cannot)\b|\w+n['’]t\b/i;
 
-// A plain quote must appear verbatim. An elided one ("a … b") passes only with at most two substantial
-// segments, in order within this one source, skipping at most 150 characters that contain no negation.
+// Apostrophes count as word characters so "doesn't" cannot be cut to "does" or "doesn".
+const isWord = (c: string | undefined) => c !== undefined && /[\w']/.test(c);
+// Start offsets of seg in body that begin and end on whole-word boundaries, from `from` on.
+function* wholeWord(body: string, seg: string, from = 0): Generator<number> {
+  for (let i = body.indexOf(seg, from); i >= 0; i = body.indexOf(seg, i + 1)) {
+    if (!isWord(body[i - 1]) && !isWord(body[i + seg.length])) yield i;
+  }
+}
+
+// A plain quote must appear verbatim, as whole words. An elided one ("a … b") passes only with at most two substantial
+// whole-word segments, in order within this one source, skipping at most 150 characters that contain no negation.
 function quoteIn(quote: string, body: string): boolean {
-  if (!ELLIPSIS.test(quote)) return body.includes(quote);
+  if (!ELLIPSIS.test(quote)) return !wholeWord(body, quote).next().done;
   const parts = quote.split(ELLIPSIS).map((p) => p.trim()).filter(Boolean);
   if (!parts.length || parts.length > 2 || parts.some((p) => p.length < MIN_SEGMENT_CHARS)) return false;
   const [first, second] = parts;
   // Try every occurrence of the first segment: the nearest following second segment gives the shortest gap.
-  for (let i = body.indexOf(first); i >= 0; i = body.indexOf(first, i + 1)) {
+  for (const i of wholeWord(body, first)) {
     if (!second) return true;
     const end = i + first.length;
-    const j = body.indexOf(second, end);
-    if (j < 0) return false;
-    const gap = body.slice(end, j);
-    if (gap.length <= MAX_ELIDED_CHARS && !NEGATION.test(gap)) return true;
+    const j = wholeWord(body, second, end).next().value;
+    if (j === undefined) return false;
+    // Widen the gap to whole words before the negation check, in case a boundary ever falls mid-word.
+    let s = end;
+    let e = j;
+    while (s > 0 && isWord(body[s - 1]) && isWord(body[s])) s--;
+    while (e < body.length && isWord(body[e - 1]) && isWord(body[e])) e++;
+    if (j - end <= MAX_ELIDED_CHARS && !NEGATION.test(body.slice(s, e))) return true;
   }
   return false;
 }
@@ -40,6 +53,8 @@ function quoteIn(quote: string, body: string): boolean {
 const plain = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().toLowerCase();
 // "C.P.L.A. No. 544-P of 2025" and "CPLA No.544-P/2025" both become "cpla544p2025".
 const caseKey = (s: string) => s.toLowerCase().replace(/\b(?:no|of|and)\b/g, "").replace(/[^a-z0-9]/g, "");
+// "P.Cr.L.J" and "PCrLJ" both become "pcrlj".
+const reportKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 // The year suffix extractCaseNumbers accepts: "of 2025", "/2025", "-2025".
 const YEAR = /(?:\s+of\s+|\s*[/-]\s*)\d{4}$/i;
 // Yearless numbers get a "#" so "CPLA 12345" can never equal "CPLA 1/2345".
@@ -70,6 +85,9 @@ export function verifyAnswer(raw: string, sources: Source[]): VerifiedAnswer {
   // Whole case numbers only: an answer number must equal one the sources contain; a yearless one may match a source number minus its year.
   const known = new Set(sources.flatMap((s) => extractCaseNumbers(`${s.title}\n${s.body}`)).flatMap((c) => [caseId(c), caseId(c.replace(YEAR, ""))]));
   if (extractCaseNumbers(body).some((c) => !known.has(caseId(c)))) problems.add("unsupported_case_reference");
+  // Law-report citations ("PLD 2019 SC 123", "2021 SCMR 456") must equal, whole, one the sources contain.
+  const reports = new Set(sources.flatMap((s) => extractReportCitations(`${s.title}\n${s.body}`)).map(reportKey));
+  if (extractReportCitations(body).some((c) => !reports.has(reportKey(c)))) problems.add("unsupported_case_reference");
 
   if (problems.size) return { ok: false, outcome, text: body, cited, problems: [...problems] };
   const n = new Map(order.map((id, i) => [id, i + 1]));
