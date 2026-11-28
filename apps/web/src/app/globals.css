@@ -204,3 +204,13 @@ circle.loader-track{fill:var(--accent);stroke:none}
 .pdf-scroll .pdfViewer .page{box-shadow:0 1px 4px rgba(20,33,33,.18);border:0;margin:12px auto}
 .pdf-stage .loader{position:absolute;inset:0;justify-content:center;background:#e4e8e6}
 .plain-text summary{cursor:pointer;font-weight:700;color:var(--accent);margin-top:18px}
+.assistant-turn{margin:22px 0}
+.assistant-question{overflow-wrap:anywhere;white-space:pre-wrap}
+.assistant-refs{padding-left:22px}
+.assistant-refs li{margin:12px 0;overflow-wrap:anywhere}
+.assistant-refs li:target{background:#e8f0ed}
+.assistant-form{display:grid;gap:8px;margin:28px 0 12px}
+.assistant-form textarea{width:100%;font:inherit;padding:10px 13px;border:1px solid #8b9b95;border-radius:4px;resize:vertical}
+.assistant-form .button{justify-self:start}
+.result-card h2:focus{outline:none}
+.result-card p{overflow-wrap:anywhere}
