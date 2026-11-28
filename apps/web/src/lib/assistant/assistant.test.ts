@@ -59,6 +59,28 @@ describe("answerQuestion", () => {
     expect(t.retrieve).not.toHaveBeenCalled();
   });
 
+  it("shows fixed copy when the planner clarification fails verification", async () => {
+    for (const clarification of ["Do you mean CPLA 999 of 2024 [S1]?", `Did the court say "an invented sentence that is long enough"?`]) {
+      const t = setup({ plan: { intent: "legal_question", searchQueries: ["x"], clarification } });
+      await answerQuestion({ question: "?", history: [] }, t.deps, t.emit, new AbortController().signal);
+      expect(answers(t.events)).toEqual([expect.objectContaining({ outcome: "clarify", text: "Could you rephrase or add detail to your question?" })]);
+    }
+    const ok = setup({ plan: { intent: "legal_question", searchQueries: ["x"], clarification: "Which case do you mean?" } });
+    await answerQuestion({ question: "?", history: [] }, ok.deps, ok.emit, new AbortController().signal);
+    expect(answers(ok.events)).toEqual([expect.objectContaining({ outcome: "clarify", text: "Which case do you mean?" })]);
+  });
+
+  it("cuts a hung retrieval at the deadline and reports TIMEOUT", async () => {
+    const t = setup();
+    t.deps.retrieve.mockImplementation(() => new Promise<RetrieveResult>(() => {}));
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(new DOMException("t", "TimeoutError")), 10);
+    const r = await answerQuestion({ question: "q", history: [] }, t.deps, t.emit, ac.signal);
+    expect(t.events.at(-1)).toMatchObject({ type: "error", code: "TIMEOUT" });
+    expect(t.deps.answer).not.toHaveBeenCalled();
+    expect(r.outcome).toBe("error");
+  });
+
   it("returns not_found with related records when nothing matches", async () => {
     const t = setup({ retrieve: { passages: [], related } });
     await answerQuestion({ question: "q", history: [] }, t.deps, t.emit, new AbortController().signal);

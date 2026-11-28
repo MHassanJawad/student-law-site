@@ -16,6 +16,7 @@ export type AssistantEvent =
 const GREETING = "Hello! I can help you research Pakistani law using this site's published judgments and study notes, with citations to the passages I rely on. This is not legal advice.";
 const DECLINED = "I can only help with research questions answered by this site's published judgments and study notes. This is not legal advice.";
 const NOT_FOUND = "I couldn't find anything in the site's published sources that answers this. This site holds Federal Constitutional Court of Pakistan judgments only; legislation has no text yet.";
+const CLARIFY_FALLBACK = "Could you rephrase or add detail to your question?";
 const UNVERIFIED = "I couldn't produce an answer I could verify against the sources. Here are the most relevant passages I found.";
 const MAX_CLARIFY_CHARS = 300;
 const EXCERPT_CHARS = 280;
@@ -43,6 +44,13 @@ export async function answerQuestion(
     return done(outcome);
   };
   const check = () => { if (signal.aborted) throw signal.reason; };
+  // Retrieval takes no signal, so a hung RPC is cut here and the run ends on the timeout path.
+  const untilAborted = <T>(work: Promise<T>) => new Promise<T>((resolve, reject) => {
+    const stop = () => reject(signal.reason);
+    if (signal.aborted) return stop();
+    signal.addEventListener("abort", stop, { once: true });
+    work.then(resolve, reject).finally(() => signal.removeEventListener("abort", stop));
+  });
 
   try {
     emit({ type: "status", stage: "planning" });
@@ -51,10 +59,14 @@ export async function answerQuestion(
     if (p.intent === "greeting") return reply("answered", GREETING);
     // Never search for out-of-scope requests, even when the plan carries appended case numbers.
     if (p.intent === "out_of_scope") return reply("declined", DECLINED);
-    if (p.clarification) return reply("clarify", p.clarification.slice(0, MAX_CLARIFY_CHARS));
+    if (p.clarification) {
+      // The planner's text is model output too: verify it like a CLARIFY reply with no sources, else show fixed copy.
+      const c = verifyAnswer(`CLARIFY: ${p.clarification}`, []);
+      return reply("clarify", c.ok && c.text ? c.text.slice(0, MAX_CLARIFY_CHARS) : CLARIFY_FALLBACK);
+    }
 
     emit({ type: "status", stage: "searching" });
-    const found = await retrieve(p.searchQueries);
+    const found = await untilAborted(retrieve(p.searchQueries));
     check();
     const related = found.related.map((r) => ({ title: r.title, path: r.path }));
     const sources = packSources(found.passages);
