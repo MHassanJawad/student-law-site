@@ -4,7 +4,12 @@ set -Eeuo pipefail
 
 env_file="$(mktemp "${RUNNER_TEMP:-/tmp}/student-law-supabase.XXXXXX")"
 web_pid=''
+stub_pid=''
 cleanup() {
+  if [[ -n "$stub_pid" ]]; then
+    kill "$stub_pid" 2>/dev/null || true
+    wait "$stub_pid" 2>/dev/null || true
+  fi
   if [[ -n "$web_pid" ]]; then
     kill "$web_pid" 2>/dev/null || true
     wait "$web_pid" 2>/dev/null || true
@@ -27,7 +32,14 @@ export LOCAL_WEB_URL='http://127.0.0.1:3000'
 export PHASE5_WEB_URL="$LOCAL_WEB_URL"
 export NEXT_TELEMETRY_DISABLED=1
 
+export ASSISTANT_ENABLED=on
+export ASSISTANT_API_KEY=ci-stub
+export ASSISTANT_API_URL='http://127.0.0.1:4010/v1/chat/completions'
+export ASSISTANT_USER_DAILY_LIMIT=4
+
 npm run build
+node scripts/ci-llm-stub.mjs &
+stub_pid=$!
 npm run start -w @student-law/web > "${RUNNER_TEMP:-/tmp}/student-law-web.log" 2>&1 &
 web_pid=$!
 ready=0
@@ -49,6 +61,7 @@ node scripts/ci-ingestion-failure.mjs
 node scripts/ci-legislation-sync.mjs
 node scripts/ci-full-text-search.mjs
 node scripts/ci-assistant-retrieve.mjs
+node scripts/ci-assistant.mjs
 node scripts/ci-search-latency.mjs
 export CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
 node scripts/ci-accessibility.mjs
