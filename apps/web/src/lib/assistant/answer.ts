@@ -3,7 +3,7 @@ import type { AssistantConfig } from "./config";
 import { chatCompletion, type ChatMessage } from "./llm";
 import type { Source } from "./sources";
 
-export const ANSWER_PROMPT_VERSION = "answer-v4";
+export const ANSWER_PROMPT_VERSION = "answer-v5";
 const MAX_HISTORY_TURNS = 8;
 const MAX_TURN_CHARS = 4000;
 
@@ -18,6 +18,7 @@ Rules:
 7. For a personal legal situation, give general information from the sources and recommend a lawyer or legal-aid body.
 8. Reply in the user's language (English, Urdu, or Roman Urdu), while quoting sources in English.
 9. Never invent case names, numbers, dates, judges, or statutes. Mention a case number only if it appears in a source exactly; otherwise refer to "the court" or the source title.
+10. Write plain text with no Markdown (no **bold**, headings, bullets or tables). Separate paragraphs with one blank line.
 Begin your reply with exactly one outcome marker:
 ANSWER: a cited answer from the sources.
 NOT_FOUND: no supplied source is relevant to the question.
