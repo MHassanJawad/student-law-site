@@ -30,3 +30,17 @@ export function splitRefs(text: string): Part[] {
     return m ? { ref: Number(m[1]) } : { text: s };
   });
 }
+
+/** Returns the URL only when it is plain http(s); anything else (javascript:, data:) is dropped. */
+export const safeOfficialUrl = (url: string | null): string | null => (url && /^https?:\/\//i.test(url) ? url : null);
+
+/** Returns the path only when it is site-relative and not protocol-relative. */
+export const safeSitePath = (path: string): string | null => (path.startsWith("/") && !path.startsWith("//") ? path : null);
+
+/** Last 8 messages: only answered turns, with [n] markers stripped (they point at citations the planner never sees). */
+export function buildHistory(turns: { question: string; answer?: { outcome: string; text: string } }[]): { role: "user" | "assistant"; content: string }[] {
+  return turns
+    .filter((t) => t.answer?.outcome === "answered")
+    .flatMap((t) => [{ role: "user" as const, content: t.question }, { role: "assistant" as const, content: t.answer!.text.replace(/\s*\[\d{1,3}\]/g, "") }])
+    .slice(-8);
+}

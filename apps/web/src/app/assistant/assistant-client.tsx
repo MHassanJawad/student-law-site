@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { AssistantEvent, Citation, RelatedRecord } from "@/lib/assistant/assistant";
-import { readEvents, splitRefs } from "@/lib/assistant/stream";
+import { buildHistory, readEvents, safeOfficialUrl, safeSitePath, splitRefs } from "@/lib/assistant/stream";
 import { getBrowserClient } from "@/lib/supabase";
 import { Loader } from "../loader";
 
@@ -20,11 +20,11 @@ function Text({ text, turn }: { text: string; turn: number }) {
 
 function References({ turn, citations }: { turn: number; citations: Citation[] }) {
   if (!citations.length) return null;
-  return <ol className="assistant-refs" aria-label="References">{citations.map((c) => <li key={c.n} id={`ref-${turn}-${c.n}`}>
+  return <ol className="assistant-refs" aria-label="References">{citations.map((c) => { const sitePath = safeSitePath(c.path); const official = safeOfficialUrl(c.officialUrl); return <li key={c.n} id={`ref-${turn}-${c.n}`}>
     <strong>{c.title}</strong>{c.label && <span className="meta"> · {c.label}</span>}
     <p className="meta">{c.excerpt}</p>
-    <Link href={c.path}>Open in this site</Link>{c.officialUrl && <> · <a href={c.officialUrl} rel="noopener noreferrer" target="_blank">Official source</a></>}
-  </li>)}</ol>;
+    {sitePath ? <Link href={sitePath}>Open in this site</Link> : null}{official && <>{sitePath ? " · " : ""}<a href={official} rel="noopener noreferrer" target="_blank">Official source</a></>}
+  </li>; })}</ol>;
 }
 
 function Related({ items }: { items: RelatedRecord[] }) {
@@ -45,6 +45,11 @@ export function AssistantClient() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
   useEffect(() => {
+    let active = true;
+    getBrowserClient()?.auth.getSession().then(({ data }) => { if (active && !data.session) setSignedOut(true); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
     if (focusId.current === null) return;
     document.getElementById(`answer-${focusId.current}`)?.focus();
     focusId.current = null;
@@ -55,15 +60,17 @@ export function AssistantClient() {
   async function ask(question: string, id: number, prior: Turn[]) {
     const controller = new AbortController();
     abortRef.current = controller;
-    setBusy(true); setStage("planning"); setSignedOut(false);
-    // Failed turns have no answer, so only answered turns become history (last 4 exchanges = 8 messages).
-    const history = prior.filter((t) => t.answer).slice(-4).flatMap((t) => [{ role: "user" as const, content: t.question }, { role: "assistant" as const, content: t.answer!.text }]);
-    const needSignIn = () => { setSignedOut(true); setTurns((t) => t.filter((x) => x.id !== id)); setInput(question); };
+    setBusy(true); setStage("planning");
+    const history = buildHistory(prior);
+    // Restore the question only if the user has not typed something new meanwhile.
+    const needSignIn = () => { setSignedOut(true); setTurns((t) => t.filter((x) => x.id !== id)); setInput((cur) => cur || question); };
     let ended = false;
     try {
       const session = await getBrowserClient()?.auth.getSession();
       const token = session?.data.session?.access_token;
+      if (controller.signal.aborted) return;
       if (!token) { needSignIn(); return; }
+      setSignedOut(false);
       const response = await fetch("/api/v1/assistant", {
         method: "POST", signal: controller.signal,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -117,7 +124,7 @@ export function AssistantClient() {
   function reset() {
     abortRef.current?.abort();
     abortRef.current = null;
-    setTurns([]); setInput(""); setBusy(false); setStage(null); setSignedOut(false);
+    setTurns([]); setInput(""); setBusy(false); setStage(null);
   }
 
   return <div className="page-wrap narrow-page">
