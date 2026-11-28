@@ -14,20 +14,27 @@ const CITATION = /\[\s*S\d+(?:\s*,\s*S\d+)*\s*\]/g;
 const MIN_QUOTE_CHARS = 20;
 const ELLIPSIS = /…|\.{3}/;
 const MIN_SEGMENT_CHARS = 12;
+const MAX_ELIDED_CHARS = 150;
+// An ellipsis must not hide a negation, or "is not guilty" could be quoted as "is … guilty".
+const NEGATION = /\b(?:not|no|never|neither|nor|without|cannot)\b|\w+n['’]t\b/i;
 
-// A plain quote must appear verbatim. An elided one ("a … b") passes only if every segment is substantial
-// and the segments appear in order within this one source body.
+// A plain quote must appear verbatim. An elided one ("a … b") passes only with at most two substantial
+// segments, in order within this one source, skipping at most 150 characters that contain no negation.
 function quoteIn(quote: string, body: string): boolean {
   if (!ELLIPSIS.test(quote)) return body.includes(quote);
   const parts = quote.split(ELLIPSIS).map((p) => p.trim()).filter(Boolean);
-  if (!parts.length || parts.some((p) => p.length < MIN_SEGMENT_CHARS)) return false;
-  let at = 0;
-  for (const p of parts) {
-    const i = body.indexOf(p, at);
-    if (i < 0) return false;
-    at = i + p.length;
+  if (!parts.length || parts.length > 2 || parts.some((p) => p.length < MIN_SEGMENT_CHARS)) return false;
+  const [first, second] = parts;
+  // Try every occurrence of the first segment: the nearest following second segment gives the shortest gap.
+  for (let i = body.indexOf(first); i >= 0; i = body.indexOf(first, i + 1)) {
+    if (!second) return true;
+    const end = i + first.length;
+    const j = body.indexOf(second, end);
+    if (j < 0) return false;
+    const gap = body.slice(end, j);
+    if (gap.length <= MAX_ELIDED_CHARS && !NEGATION.test(gap)) return true;
   }
-  return true;
+  return false;
 }
 
 const plain = (s: string) => s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().toLowerCase();

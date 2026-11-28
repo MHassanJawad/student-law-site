@@ -19,7 +19,7 @@ describe("planQuestion", () => {
     const p = await run("question");
     expect(p).toEqual({ intent: "legal_question", searchQueries: ["a", "b", "c", "d"], clarification: null });
     expect(PLANNER_PROMPT_VERSION).toBe("planner-v3");
-    expect(mock.mock.calls[0][1]).toMatchObject({ temperature: 0, maxTokens: 400, json: true });
+    expect(mock.mock.calls[0][1]).toMatchObject({ temperature: 0, maxTokens: 1000, json: true });
   });
 
   it("resolves follow-up using history", async () => {

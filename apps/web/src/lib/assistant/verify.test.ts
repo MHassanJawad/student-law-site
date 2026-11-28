@@ -137,7 +137,37 @@ describe("verifyAnswer elided quotes", () => {
     expect(verifyAnswer(`ANSWER: It held "the equivalence certificate carries legal significance … and binds every university forever" [S1].`, one).problems).toEqual(["unmatched_quote"]);
   });
   it("checks an uncited reply's elided quote against one supplied source", () => {
-    expect(verifyAnswer(`NOT_FOUND: Only "the equivalence certificate carries legal significance … may prescribe minimum credit hours" appears.`, one).ok).toBe(true);
+    expect(verifyAnswer(`NOT_FOUND: Only "create an absolute or vested right … may prescribe minimum credit hours" appears.`, one).ok).toBe(true);
+  });
+  it("rejects an elision that stitches the holding onto a party's argument (review probe)", () => {
+    const s = [src(1, "Learned counsel for the petitioner argued that the petitioner, having served for twenty years, was entitled to full relief. We have considered the submissions. The court held that the petitioner had not exhausted the departmental remedy and the petition is dismissed.")];
+    expect(verifyAnswer(`ANSWER: It ruled "the court held that the petitioner … was entitled to full relief" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    // The same stitch inside one sentence still fails when the skipped text holds a negation.
+    const t = [src(1, "The court held that the petitioner was not shown to have been entitled to full relief.")];
+    expect(verifyAnswer(`ANSWER: It ruled "the court held that the petitioner … entitled to full relief" [S1].`, t).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects an elision that drops a negation (review probe)", () => {
+    const s = [src(1, "On the evidence, the accused person is not guilty of the offence charged.")];
+    expect(verifyAnswer(`ANSWER: It found "the accused person is … guilty" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    expect(verifyAnswer(`ANSWER: It found "the accused person is … guilty of the offence charged" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects every negation form in the skipped text", () => {
+    for (const neg of ["not", "No", "never", "neither", "nor", "without", "cannot", "wasn't", "didn’t"]) {
+      const s = [src(1, `The first segment here is long ${neg} and the second segment here is long.`)];
+      expect(verifyAnswer(`ANSWER: "the first segment here is long … the second segment here is long" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+    }
+  });
+  it("rejects a quote with three segments", () => {
+    expect(verifyAnswer(`ANSWER: "the equivalence certificate carries … an absolute or vested right … minimum credit hours for" [S1].`, one).problems).toEqual(["unmatched_quote"]);
+  });
+  it("rejects a gap longer than 150 characters", () => {
+    const s = [src(1, `The first segment here is long, ${"and so on ".repeat(16)}and the second segment here is long.`)];
+    expect(verifyAnswer(`ANSWER: "the first segment here is long … the second segment here is long" [S1].`, s).problems).toEqual(["unmatched_quote"]);
+  });
+  it("accepts a legitimate elision with a short, negation-free gap", () => {
+    const s = [src(1, "The Commission, acting under its statute, may determine the equivalence of academic qualifications.")];
+    expect(verifyAnswer(`ANSWER: It says "the Commission … may determine the equivalence of academic qualifications" [S1].`, s).ok).toBe(true);
+    expect(verifyAnswer(`ANSWER: It says "the commission, acting … may determine the equivalence of academic qualifications" [S1].`, s).ok).toBe(true);
   });
   it("accepts a real gpt-oss elided quote (eval run 4, topic-hec-equivalence-admission)", () => {
     // Model output recorded verbatim during the Task 12 eval; it failed with unmatched_quote before elision support.

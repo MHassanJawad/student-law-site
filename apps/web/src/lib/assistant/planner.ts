@@ -63,7 +63,7 @@ export async function planQuestion(
   try {
     ({ content } = await chatCompletion(
       config,
-      { messages: [{ role: "system", content: PLANNER_PROMPT }, { role: "user", content: `${transcript}Latest question: ${question}` }], temperature: 0, maxTokens: 400, json: true },
+      { messages: [{ role: "system", content: PLANNER_PROMPT }, { role: "user", content: `${transcript}Latest question: ${question}` }], temperature: 0, maxTokens: 1000, json: true },
       signal,
     ));
   } catch (error) {
