@@ -43,15 +43,15 @@ The pipeline is a **bounded agent**: one planning call, one retrieval, one answe
 1. `ASSISTANT_ENABLED=on` and a configured key, else 503 `ASSISTANT_DISABLED` (also the kill switch).
 2. Same-origin request (`hasTrustedOrigin`), else 403.
 3. Signed-in user (`verifyUser`), else 401. Anonymous use would make cost unbounded.
-4. Body validation: question 1–1,000 characters after trimming; at most 8 prior turns, each ≤4,000 characters; else 400.
+4. Body validation: body ≤64 KB; question 1–1,000 characters after trimming; at most 8 prior turns, each cut to 4,000 characters (not rejected); else 400.
 5. Per-process burst limit: 10 requests per minute per client address (proxy, first line only).
-6. Durable quota in Postgres: 30 questions per user per day, 500 per site per day (both env-configurable). A request that fails because of the model provider is refunded.
+6. Durable quota in Postgres: 30 questions per user per day, 500 per site per day (both env-configurable). Both are clamped in the database, and each consumed question returns a charge token. A request that fails because of the model provider or a timeout is refunded with that token; a client disconnect is not refunded, so disconnecting mid-answer cannot buy free model calls.
 
 ### Model use
 
 - Provider-agnostic OpenAI-compatible chat completions, reusing the summary pipeline's provider (Groq, `openai/gpt-oss-120b`) by default via new `ASSISTANT_*` variables. The key is a **server-only secret** in the web app, the first one it holds; it must never get a `NEXT_PUBLIC_` prefix.
-- Planner: temperature 0, JSON mode, ≤400 output tokens. Invalid JSON falls back to searching the raw question; the assistant never fails because planning failed.
-- Answer: temperature 0.2, ≤1,200 output tokens, sources capped at 12,000 characters (about 3,000 tokens) in total.
+- Planner: temperature 0, JSON mode, ≤1,000 output tokens (reasoning models spend part of the budget before the JSON). Invalid JSON falls back to searching the raw question; the assistant never fails because planning failed.
+- Answer: temperature 0, ≤1,200 output tokens, plain text without Markdown, sources capped at 12,000 characters (about 3,000 tokens) in total.
 - Groq's free tier allows about 8,000 tokens per minute, roughly one answer per minute for the whole site. Launch to the public therefore needs a paid tier or a higher-limit model. The global daily cap and the 429 handling keep the free tier safe for testing.
 
 ### Answer rules (system prompt)
@@ -64,14 +64,14 @@ Fail closed. The answer is shown only if all hold:
 
 - it cites at least one source, unless the outcome is `not_found`, `clarify`, or `declined`;
 - every `[S#]` refers to a source that was supplied;
-- every passage in double quotes of 20+ characters appears in its cited source (whitespace- and quote-style-insensitive);
-- every case-number-like string (e.g. `C.P.L.A. No. 544-P of 2025`) appears in a supplied source's title or text.
+- every passage in double quotes of 20+ characters appears in its cited source as whole words (whitespace- and quote-style-insensitive). An elided quote ("a … b") passes only within bounds: at most 2 segments, each ≥12 characters and matched on whole-word boundaries, in order within one source, skipping ≤150 characters that contain no negation;
+- every case-number-like string (e.g. `C.P.L.A. No. 544-P of 2025`) and every law-report citation (e.g. `PLD 2019 SC 123`, `2021 SCMR 456`) appears, whole, in a supplied source's title or text.
 
 Citations are then renumbered `[1]…[n]` in order of first use, and the reference list contains only cited sources. On failure the user gets "I couldn't produce an answer I could verify against the sources" plus the top passages as links.
 
 ### Outcomes
 
-`answered`, `not_found` (no relevant passages; shows coverage: "FCCP judgments only, N published"), `clarify` (question too vague; one clarifying question), `declined` (out of scope, unsafe, or prompt injection), `unverified` (the fallback above).
+`answered`, `not_found` (no relevant passages; shows coverage: "FCCP judgments only, N published"), `clarify` (question too vague; one clarifying question, verified like an answer with no sources, else fixed copy), `declined` (out of scope, unsafe, or prompt injection), `unverified` (the fallback above). `not_found` and `declined` always show fixed copy, never the model's text.
 
 ### Streaming and time
 
