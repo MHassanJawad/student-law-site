@@ -6,6 +6,7 @@
     "import:sample": "node --env-file=.env --import tsx src/import-sample.ts",
     "ingest:fccp": "node --env-file=.env --import tsx src/ingest-fccp.ts",
     "review:fccp": "node --env-file=.env --import tsx src/review-fccp.ts",
+    "build:chunks": "node --env-file=.env --import tsx src/build-chunks.ts",
     "extract:fccp-text": "node --env-file=.env --import tsx src/extract-fccp-text.ts",
     "summarize:judgments": "node --env-file=.env --import tsx src/summarize-judgments.ts",
     "review:summaries": "node --env-file=.env --import tsx src/review-summaries.ts",

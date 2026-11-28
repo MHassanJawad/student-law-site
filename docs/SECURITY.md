@@ -12,6 +12,7 @@ Updated 2026-10-25. Scope: the Next.js web app, Supabase Auth/PostgreSQL, and th
 | Editorial content | Students or attackers publishing content | Only `profiles.role = 'operator'` passes RLS for writes; clients cannot set their own role; a trigger stamps review metadata and audit history. |
 | Service-role key | Leak gives full database access | Used only by the local worker; never in the web app or browser bundle. CI scans history for committed secrets with gitleaks. |
 | Ingestion worker | SSRF, oversized or malicious PDFs | Fixed official host, no redirects, byte limits, timeouts, robots check; PDF text stays private. The worker refuses non-local databases. |
+| Assistant and its model key | Prompt injection through source text or questions; fabricated citations or quotes; key leak; cost abuse | Sources are delimited and labelled untrusted. A code verifier checks every citation, quote, and case number before an answer is shown. The key is server-only. Daily limits are enforced in the database. See below. |
 | Availability | Request floods, scraping | Per-client API rate limits; maintenance mode; health endpoint for monitoring. |
 
 ## Controls in place
@@ -25,6 +26,9 @@ Updated 2026-10-25. Scope: the Next.js web app, Supabase Auth/PostgreSQL, and th
 - **Supply chain:** Exact dependency versions and a lockfile; `npm audit --audit-level=high` in CI; Dependabot for npm, GitHub Actions, and the Docker base image; [licence inventory](THIRD_PARTY_LICENSES.md).
 - **Worker-only functions:** Supabase grants browser roles `EXECUTE` on new functions by default. Migration 018 revokes the FCCP approve and withdraw functions from `anon` and `authenticated`, and the legislation approve function is revoked from them when it is created. CI calls each one with the public key and expects a refusal.
 - **Corpus sync:** reads only from local Supabase and requires an HTTPS target unless the CI-only `--allow-local-target` flag is given. It defaults to a dry run, upserts only, and never touches account, editorial, or review-queue tables.
+- **Assistant, prompt injection:** retrieved sources are delimited and labelled untrusted in the prompt, and the model's output is never trusted: the verifier checks that every citation points to a retrieved source and that every quoted passage and case number appears in it, before any answer is shown. `not_found` and `declined` outcomes show fixed copy. Elided quotes are accepted only within strict bounds: at most 2 segments, each at least 12 characters, in one source, with a gap of no more than 150 characters and no negation in the gap. Link hrefs in answers are scheme-checked.
+- **Assistant, secret handling:** the web app holds exactly one server secret, `ASSISTANT_API_KEY`. It is read only in server code, never `NEXT_PUBLIC_`, and the API URL must be HTTPS. Rotate it at the provider and in the host environment; set `ASSISTANT_ENABLED=off` to stop use at once.
+- **Assistant, quotas:** daily per-user and global limits are charged in the database and clamped to the `assistant_settings` maxima, so configuration cannot raise them. Provider failures are refunded with a server-held charge token; a client disconnect is not. Questions and answers are not stored or logged.
 - **Container:** Multi-stage build, Alpine base, non-root `node` user, no secrets in the image. CI checks the image does not run as root.
 
 ## Known limitations and deferred items

@@ -18,6 +18,7 @@ export function rateRuleFor(pathname: string, method: string): RateRule | null {
     return { bucket: "account-delete", limit: 5, windowMs: 15 * MINUTE };
   }
   if (pathname.startsWith("/api/v1/me/")) return { bucket: "account", limit: 60, windowMs: MINUTE };
+  if (pathname === "/api/v1/assistant") return { bucket: "assistant", limit: 10, windowMs: MINUTE };
   if (pathname.startsWith("/api/v1/search/")) return { bucket: "search", limit: 120, windowMs: MINUTE };
   return { bucket: "read", limit: 240, windowMs: MINUTE };
 }

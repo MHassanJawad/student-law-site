@@ -5,6 +5,7 @@ export const CORPUS_TABLES = {
   source_registry: { key: "id", columns: "id,code,owner,root_url,jurisdiction,material_kind,access_status,attribution,reviewed_at,last_checked_at,created_at,access_review_note" },
   legal_documents: { key: "id", columns: "id,source_id,source_item_id,canonical_url,kind,title,language,publication_status,current_version_id,created_at,updated_at" },
   document_versions: { key: "id", columns: "id,document_id,content_hash,checked_at,raw_metadata,extracted_text,text_kind,parser_version,review_status,created_at,summary,summary_model,summary_reviewed_at,source_pdf_sha256" },
+  document_chunks: { key: "version_id,chunker_version,ordinal", columns: "version_id,chunker_version,ordinal,document_id,body,char_start,char_end,paragraph_label" },
   judgment_metadata: { key: "document_id", columns: "document_id,issuing_court,case_number,decision_date,author_judge,bench,raw_citation,normalized_citation" },
   legislation_metadata: { key: "document_id", columns: "document_id,jurisdiction,instrument_type,enactment_year,legal_status,official_citation" },
   document_sections: { key: "id", columns: "id,version_id,section_key,heading,body,display_order,review_status" },
@@ -30,6 +31,11 @@ export function assertSyncTarget(target: string | undefined, allowLocal: boolean
   const local = ["localhost", "127.0.0.1"].includes(url.hostname);
   if (local && !allowLocal) throw new Error("The sync target is local; pass --allow-local-target only for the CI check.");
   if (!local && url.protocol !== "https:") throw new Error("The hosted sync target must use HTTPS.");
+}
+
+/** Key columns to order by so paging over a composite key is stable. */
+export function orderColumns(key: string): string[] {
+  return key.split(",");
 }
 
 /** Splits rows into bounded request batches. */

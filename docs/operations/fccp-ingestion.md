@@ -34,7 +34,8 @@ All commands run on the operator machine against local Supabase. They refuse a r
    - `approve <draft-uuid> "<note>"` copies a draft onto the public version, and `reject <draft-uuid> "<note>"` discards it so the next run drafts again.
    - `unpublish <draft-uuid> "<note>"` removes an approved summary.
    - `approve-all "<note>"` approves every pending draft. Use it only after reading them.
-6. **Publish.** Run `npm run sync:corpus`, then `npm run sync:corpus -- --apply`. Text and approved summaries travel with each document version. The hosted database needs migration 020 (`npx supabase db push`) before the first sync that carries summaries, and migration 021 before the web release that adds the PDF reader, because the document page reads `source_pdf_sha256`.
+6. **Build chunks.** `npm run build:chunks` splits each published judgment's extracted text into the passages the research assistant retrieves. Run it after extracting text and before syncing, so the sync carries `document_chunks`.
+7. **Publish.** Run `npm run sync:corpus`, then `npm run sync:corpus -- --apply`. Text and approved summaries travel with each document version. The hosted database needs migration 020 (`npx supabase db push`) before the first sync that carries summaries, and migration 021 before the web release that adds the PDF reader, because the document page reads `source_pdf_sha256`. The research assistant needs migrations 023 to 025 (chunks, retrieval, quota). To stop the assistant without a rollback, set `ASSISTANT_ENABLED=off` and redeploy.
 
 ## What the public sees
 

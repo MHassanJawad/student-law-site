@@ -15,6 +15,7 @@
     "import:sample": "npm run import:sample -w @student-law/worker",
     "ingest:fccp": "npm run ingest:fccp -w @student-law/worker --",
     "review:fccp": "npm run review:fccp -w @student-law/worker --",
+    "build:chunks": "npm run build:chunks -w @student-law/worker --",
     "extract:fccp-text": "npm run extract:fccp-text -w @student-law/worker --",
     "summarize:judgments": "npm run summarize:judgments -w @student-law/worker --",
     "review:summaries": "npm run review:summaries -w @student-law/worker --",

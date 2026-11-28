@@ -65,6 +65,14 @@ Each judgment gets a short summary of **what the case is about and what the cour
 </td>
 </tr>
 <tr>
+<td colspan="2" valign="top">
+
+### 💬 A research assistant that shows its sources
+Sign in and ask a question in plain English. The assistant searches the published judgments, answers only from what it finds, and cites each source. Code checks every citation, quote and case number before an answer is shown, and it declines questions it can't support.
+
+</td>
+</tr>
+<tr>
 <td colspan="2" align="center">
 <img src="docs/images/search.jpg" alt="Search results with reviewed AI summaries under each judgment" width="820" />
 </td>
@@ -220,6 +228,7 @@ Every pull request runs the full CI gate in [`ci.yml`](.github/workflows/ci.yml)
 - **Courts:** judgments come only from the FCCP for now. More courts will be added source by source, once each is reviewed.
 - **Search scope:** search matches the full text and summary of judgments that have extracted text. Scanned judgments are matched by title and case number until OCR exists.
 - **Scanned PDFs:** these need an OCR step, which doesn't exist yet. Until then they show metadata only.
+- **Research assistant:** answers come only from published judgments with extracted text, and it declines anything it can't verify. It is built but not launched: the launch quality threshold is unconfirmed, and a public launch needs a paid model tier.
 - **Legislation:** records carry metadata, and their legal status is marked unknown until verified.
 
 ## Documentation

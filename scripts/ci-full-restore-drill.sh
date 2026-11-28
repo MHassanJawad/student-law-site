@@ -35,7 +35,10 @@ if [[ "${#db_containers[@]}" -ne 1 ]]; then
   echo 'Expected exactly one disposable Supabase database container.' >&2
   exit 1
 fi
-{ printf 'SET session_replication_role = replica;\n'; cat "$backup_path"; } |
+# The migrations seed the assistant_settings singleton and the dump restores it, so clear the seeded row first.
+{ printf 'SET session_replication_role = replica;
+TRUNCATE public.assistant_settings;
+'; cat "$backup_path"; } |
   docker exec -i "${db_containers[0]}" psql -U postgres -d postgres --single-transaction -v ON_ERROR_STOP=1
 node scripts/ci-full-restore-fixture.mjs verify "$fixture_path"
 echo 'Disposable Auth and application-data restore drill passed.'

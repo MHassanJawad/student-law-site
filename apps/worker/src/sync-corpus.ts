@@ -1,6 +1,6 @@
 // Copy reviewed corpus records from the local review database to a hosted database. Upsert only; never deletes.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { assertSyncTarget, chunk, CORPUS_TABLES, SYNCED_STATUSES } from "./corpus-sync.js";
+import { assertSyncTarget, chunk, CORPUS_TABLES, orderColumns, SYNCED_STATUSES } from "./corpus-sync.js";
 
 type Table = keyof typeof CORPUS_TABLES;
 type Row = Record<string, unknown>;
@@ -14,8 +14,9 @@ function client(url: string | undefined, key: string | undefined, label: string)
 async function readAll(db: SupabaseClient, table: Table, filter: (query: any) => any = (query) => query): Promise<Row[]> {
   const rows: Row[] = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await filter(db.from(table).select(CORPUS_TABLES[table].columns as string))
-      .order(CORPUS_TABLES[table].key).range(from, from + PAGE - 1);
+    let query = filter(db.from(table).select(CORPUS_TABLES[table].columns as string));
+    for (const column of orderColumns(CORPUS_TABLES[table].key)) query = query.order(column);
+    const { data, error } = await query.range(from, from + PAGE - 1);
     if (error) throw new Error(`Reading ${table}: ${error.message}`);
     rows.push(...(data as Row[]));
     if ((data as Row[]).length < PAGE) return rows;
@@ -30,7 +31,7 @@ async function readFor(db: SupabaseClient, table: Table, column: string, ids: un
 
 async function upsert(db: SupabaseClient, table: Table, rows: Row[]): Promise<void> {
   // Versions carry full judgment text, so keep those request bodies small.
-  for (const batch of chunk(rows, table === "document_versions" ? 20 : 500)) {
+  for (const batch of chunk(rows, table === "document_versions" ? 20 : table === "document_chunks" ? 200 : 500)) {
     const { error } = await db.from(table).upsert(batch, { onConflict: CORPUS_TABLES[table].key });
     if (error) throw new Error(`Writing ${table}: ${error.message}`);
   }
@@ -52,10 +53,11 @@ async function main(): Promise<void> {
   const documents = await readAll(local, "legal_documents", (query) => query.in("publication_status", [...SYNCED_STATUSES]));
   const documentIds = documents.map((row) => row.id);
   const versions = await readFor(local, "document_versions", "document_id", documentIds);
+  const chunks = await readFor(local, "document_chunks", "version_id", versions.map((row) => row.id));
   const judgments = await readFor(local, "judgment_metadata", "document_id", documentIds);
   const laws = await readFor(local, "legislation_metadata", "document_id", documentIds);
   const sections = await readFor(local, "document_sections", "version_id", versions.map((row) => row.id));
-  const plan = { source_registry: sources.length, legal_documents: documents.length, document_versions: versions.length,
+  const plan = { source_registry: sources.length, legal_documents: documents.length, document_versions: versions.length, document_chunks: chunks.length,
     judgment_metadata: judgments.length, legislation_metadata: laws.length, document_sections: sections.length };
   if (!apply) {
     process.stdout.write(`${JSON.stringify({ mode: "dry-run", upserts: plan })}\nRe-run with --apply to write to ${process.env.TARGET_SUPABASE_URL}.\n`);
@@ -65,6 +67,7 @@ async function main(): Promise<void> {
   await upsert(target, "source_registry", sources);
   await upsert(target, "legal_documents", documents.map(({ current_version_id: _pointer, ...row }) => row));
   await upsert(target, "document_versions", versions);
+  await upsert(target, "document_chunks", chunks);
   await upsert(target, "legal_documents", documents);
   await upsert(target, "judgment_metadata", judgments);
   await upsert(target, "legislation_metadata", laws);

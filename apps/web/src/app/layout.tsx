@@ -27,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/learn/maxims">Maxims</Link>
               <Link href="/learn/articles">Articles</Link>
               <Link href="/learn/dictionary">Dictionary</Link>
+              <Link href="/assistant">Ask AI</Link>
               <Link href="/saved">Saved Citations</Link>
               <AccountLink />
             </nav>
