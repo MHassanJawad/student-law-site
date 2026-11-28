@@ -12,7 +12,10 @@ Updated 2026-10-25. This records what the system stores and the compliance posit
 | Saved citation, note, folder, timestamps | `public.saved_citations` | Personal library | Until the user removes it or deletes the account |
 | Session token | Browser local storage | Keep the user signed in | Until sign-out or expiry |
 | Editorial byline and provenance note | `public.editorial_entries` | Attribution of published learning content | Kept after operator deletion; account IDs are nulled |
+| Assistant daily counts and per-question charge rows (user ID, day; no text) | Assistant quota tables (migration 025) | Daily limits and refunds | Removed with the account (cascade) |
 | Request counts per address | Web process memory | Rate limiting | At most 15 minutes; never written to disk |
+
+The research assistant sends each question and the recent conversation to the model provider (Groq by default, via `ASSISTANT_API_URL`) to produce an answer. Questions and answers are not stored or logged by the app; only the counts above are kept.
 
 The app stores no search terms, analytics, advertising identifiers, or tracking cookies. Hosting providers may keep request logs; record their retention when a host is chosen.
 
@@ -27,6 +30,7 @@ The app stores no search terms, analytics, advertising identifiers, or tracking 
 | Processor | Data | Status |
 | --- | --- | --- |
 | Supabase (database and Auth) | All account data above | Chosen for the stack; **hosting**: select region, plan, backups, and accept its data processing terms |
+| Model provider (Groq by default) | Assistant questions, recent conversation, and retrieved source excerpts | **review**: accept its data terms and confirm its retention and training policy for the plan used; free-tier terms differ |
 | Web host | Request logs | Not chosen |
 | Email delivery (SMTP) | Email address, recovery messages | Not chosen; Supabase's built-in sender is for testing only |
 

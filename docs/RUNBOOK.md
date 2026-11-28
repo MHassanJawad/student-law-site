@@ -33,6 +33,7 @@ The health endpoint is not rate limited and returns `503` with a reason during m
 - **Maintenance mode:** set `MAINTENANCE_MODE=on` and restart. Pages and APIs return `503` with `Retry-After`; health reports `maintenance`. Unset the variable and restart to resume.
 - **Rollback:** see [deployment rollback](DEPLOYMENT.md#rollback).
 - **Withdraw a record:** run `npm run review:fccp -- withdraw <candidate-uuid> "<reason>"` locally. Then run `npm run sync:corpus -- --apply`; the withdrawn status is copied to the hosted record. Until then, the hosted record stays published.
+- **Research assistant:** see [below](#research-assistant).
 - **Promote an operator:** with service-role access, run `update public.profiles set role = 'operator' where id = '<user-id>';`. Enable MFA for that account first.
 - **Account help:** users export and delete their own data in account settings. The owner can trigger a password reset email from Supabase Auth; never ask for or handle a user's password.
 
@@ -41,7 +42,17 @@ The health endpoint is not rate limited and returns `503` with a reason during m
 - **Production** must use a Supabase plan with daily backups. Record the plan's retention period in [data privacy](DATA_PRIVACY.md).
 - **Independent copy:** each month, run `npx supabase db dump --linked --schema auth,public --data-only --use-copy --file <dated file>` together with a schema dump. Store the files encrypted, outside the repository and outside the provider. Delete them after the retention period.
 - **Restore rehearsal:** CI already restores Auth accounts and saved citations into a disposable stack (`scripts/ci-full-restore-drill.sh`). On hosted infrastructure, restore into a new scratch project first. Verify sign-in and a saved citation, then promote the project or copy the data back. After restoring a backup into the live service, re-apply any account deletions made since the backup was taken.
+- **Data-only restore:** run `truncate public.assistant_settings;` first. Migration 025 seeds that singleton row, so the restore otherwise fails on a duplicate key; the CI drill already does this.
 - **Targets:** RPO 24 hours (daily backups) and RTO 8 hours, as proposed in the plan. Confirm them with the owner before launch.
+
+## Research assistant
+
+- **Kill switch:** set `ASSISTANT_ENABLED=off` and redeploy. The assistant API then returns 503 `ASSISTANT_DISABLED`.
+- **Provider outage or rate limits:** users see a retry message and the question is refunded to their quota. A client disconnect is not refunded. If the outage lasts, use the kill switch.
+- **Raising limits:** the environment variables can only lower the daily limits, because the database clamps them to the `assistant_settings` row (`user_max` 30, `global_max` 500). To raise them, update that row, then raise the matching `ASSISTANT_*_DAILY_LIMIT`.
+- **After new judgments:** run `npm run build:chunks` before `sync:corpus` (see the [FCCP runbook](operations/fccp-ingestion.md)).
+- **Quality check:** `EVAL_PAUSE_MS=60000 npm run eval:assistant -w @student-law/web` runs the golden questions against the local database. It passes only when every item is scored, hits are at least 0.80, verified answers at least 0.95, and every out-of-scope or injection item is declined. Groq's free tier allows about one full run a day.
+- **Capacity:** Groq's free tier (about 8,000 tokens a minute) supports roughly one answer a minute site-wide, so a public launch needs a paid tier. Netlify's function time limit must exceed `ASSISTANT_TIMEOUT_MS`; confirm it for the plan.
 
 ## Incident handling
 

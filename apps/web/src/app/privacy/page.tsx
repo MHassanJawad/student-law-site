@@ -23,6 +23,9 @@ export default function PrivacyPage() {
       </ul>
       <p>Your browser keeps a sign-in session in its local storage until you sign out. Do not put confidential client or case information in notes.</p>
     </section>
+    <section className="text-panel"><h2>The research assistant</h2>
+      <p>When you ask the assistant a question, the question and your recent conversation are sent to the AI model provider (Groq, by default) so it can write an answer from the site&apos;s published sources. The site does not store or log your questions or the answers. It keeps only how many questions you have asked each day, to apply daily limits, and that record is deleted with your account.</p>
+    </section>
     <section className="text-panel"><h2>Who can see it</h2>
       <p>Only you can read your saved citations; other students and content operators cannot. The data is held by the project&apos;s database and sign-in provider, Supabase, and the web hosting provider chosen for launch, which process it only to run the service. It is not sold or shared for marketing.</p>
     </section>
@@ -31,7 +34,7 @@ export default function PrivacyPage() {
     </section>
     <section className="text-panel"><h2>Questions</h2>
       <SupportContact />
-      <p className="meta">Last updated 25 October 2026.</p>
+      <p className="meta">Last updated 28 November 2026.</p>
     </section>
   </div>;
 }
