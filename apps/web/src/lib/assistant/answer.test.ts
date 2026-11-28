@@ -39,7 +39,7 @@ describe("buildAnswerMessages", () => {
     const s = buildAnswerMessages("q", [], [])[0].content;
     for (const k of ["ANSWER:", "NOT_FOUND:", "CLARIFY:", "DECLINE:"]) expect(s).toContain(k);
     expect(s).toContain("FCCP judgments only");
-    expect(ANSWER_PROMPT_VERSION).toBe("answer-v1");
+    expect(ANSWER_PROMPT_VERSION).toBe("answer-v4");
   });
 });
 
